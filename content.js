@@ -85,6 +85,14 @@ window.SITE_CONTENT = {
             "打开两个新脚本，在文件底部找到 ClientEvents.lang('zh_cn', e => {，将 zh_cn 改为目标语言简称。例如英文使用 ClientEvents.lang('en_us', e => {，日文使用 ClientEvents.lang('ja_jp', e => {。两个脚本都要修改注册语言代码；文件名、目录名和注册代码应保持一致。",
             "完成后，在启动器里将游戏语言切换到目标语言，检查 kubejs/assets 与 kubejs/client_scripts 添加的文本。若文本没有变化，核对语言代码、目录层级和 ClientEvents.lang 注册项；若启动时报脚本错误，恢复备份并检查变量名引用及语法。"
           ]
+        },
+        {
+          id: "workflow",
+          title: "流程梳理",
+          section: "02",
+          body: [
+            "本页用于整理钻石大陆加豪版的制作、测试与发布流程。"
+          ]
         }
       ]
     }
