@@ -1,4 +1,8 @@
 window.SITE_CONTENT = {
+  home: {
+    featuredProjects: ["diamond-continent-plus"],
+    currentProjects: ["diamond-continent-plus", "site-archive"]
+  },
   profile: {
     name: "哦里冻",
     handle: "ORITONG",
@@ -10,7 +14,7 @@ window.SITE_CONTENT = {
       "尝试将所有能做的做到最好，但最后总是做成一团糟……",
       "喜欢充满了童话和梦想的世界，也想为你留住那一瞬的惊奇。",
       "平时制作 Minecraft 整合包，也担任游戏《Blophy》的官方谱师。",
-      "如果你喜欢我的作品，欢迎来图库看看，也欢迎支持！"
+      "图库里收着我的形象约稿，欢迎来看看不同画师笔下的我。"
     ],
     links: [
       { name: "Bilibili", label: "B 站", description: "视频与动态", url: "https://space.bilibili.com/494691236", mark: "B" },
@@ -69,12 +73,23 @@ window.SITE_CONTENT = {
       tags: ["Minecraft", "整合包", "汉化"],
       role: "整合包制作与资料整理",
       outcome: "把整合包相关说明整理成便于查阅的 Wiki。",
+      description: "一个 Minecraft 整合包。在这里整理它的翻译说明与游玩流程。",
       wikiTheme: "plain",
       pages: [
         {
           id: "translation-method",
           title: "如何将整合包翻译为不同语言",
           section: "01",
+          description: "整理语言文件的位置、翻译键与多语言脚本的配置步骤。",
+          headings: [
+            { before: 0, id: "before-start", title: "开始之前" },
+            { before: 2, id: "language-files", title: "语言资源文件" },
+            { before: 4, id: "client-scripts", title: "客户端翻译脚本" },
+            { before: 6, id: "language-registration", title: "注册目标语言" },
+            { before: 7, id: "check-result", title: "检查翻译结果" }
+          ],
+          callouts: [1],
+          snippets: [{ after: 6, language: "JavaScript", caption: "注册行示例（原文片段）", text: "ClientEvents.lang('en_us', e => {" }],
           body: [
             "本页根据钻石大陆加豪版的实例文件编写。语言文件主要位于 kubejs/assets 和 kubejs/client_scripts；动手前先备份整个 kubejs 文件夹。",
             "目前本整合包的 FTB 任务部分暂时不提供兼容。通过以下方法添加的语言不会翻译或兼容 FTB 任务内容。",
@@ -90,6 +105,8 @@ window.SITE_CONTENT = {
           id: "workflow",
           title: "流程梳理",
           section: "02",
+          status: "整理中",
+          description: "待补充的游玩说明与流程记录，目前为整理计划。",
           body: [
             "本页用于补充钻石大陆加豪版本体说明中没有覆盖的内容，记录游玩时容易遗漏的规则、前置条件、注意事项与常见问题。",
             "如果某个机制、物品或任务在整合包内没有写清楚，可以在这里补充背景、触发条件、获取方式和解决方法，方便之后查阅。",
@@ -103,7 +120,7 @@ window.SITE_CONTENT = {
   participations: [],
   gallery: {
     title: "个人图库",
-    description: "收好一路收藏的灵感与约稿。每一幅作品都来自画师的创作，感谢相遇。",
+    description: "这里收录了我的形象约稿，记录不同画师笔下的我。感谢每一位画师的创作。",
     rightsNotice: "所有稿件均禁止投喂 AI。未经许可，请勿转载、商用或挪作他用。",
     artworks: [
       { image: "assets/gallery/character-sheet.png", title: "个人形象设定图", artist: "鰹ノえぼシ", artistUrl: "https://www.eboshi-official.com/", alt: "哦里冻的个人形象设定图" },

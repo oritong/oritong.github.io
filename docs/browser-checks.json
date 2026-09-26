@@ -1,0 +1,212 @@
+{
+  "mode": "DOM and behavior; no image contents, screenshots or external requests",
+  "widths": [
+    320,
+    360,
+    390,
+    639,
+    640,
+    760,
+    761,
+    959,
+    960,
+    1100,
+    1440
+  ],
+  "routes": [
+    "#/home",
+    "#/profile",
+    "#/projects",
+    "#/projects/site-archive",
+    "#/projects/diamond-continent-plus",
+    "#/resources",
+    "#/wiki",
+    "#/wiki/site-archive/overview",
+    "#/wiki/site-archive/structure",
+    "#/wiki/site-archive/maintenance",
+    "#/wiki/site-archive/deploy",
+    "#/wiki/diamond-continent-plus/translation-method",
+    "#/wiki/diamond-continent-plus/workflow",
+    "#/gallery",
+    "#/search/Minecraft"
+  ],
+  "layoutChecks": 165,
+  "interactions": [
+    {
+      "name": "background animation defaults to on",
+      "passed": true
+    },
+    {
+      "name": "random meteor renders without pointer movement",
+      "passed": true
+    },
+    {
+      "name": "project quote removed",
+      "passed": true
+    },
+    {
+      "name": "featured project fills its row",
+      "passed": true
+    },
+    {
+      "name": "only selected project is featured",
+      "passed": true
+    },
+    {
+      "name": "menu opens and focuses links",
+      "passed": true
+    },
+    {
+      "name": "menu closes and restores focus",
+      "passed": true
+    },
+    {
+      "name": "closed menu cannot receive focus",
+      "passed": true
+    },
+    {
+      "name": "route change focuses H1",
+      "passed": true
+    },
+    {
+      "name": "page scrolling restored",
+      "passed": true
+    },
+    {
+      "name": "mobile Wiki directory collapses",
+      "passed": true
+    },
+    {
+      "name": "Wiki directory opens",
+      "passed": true
+    },
+    {
+      "name": "article anchor is shareable",
+      "passed": true
+    },
+    {
+      "name": "next article works",
+      "passed": true
+    },
+    {
+      "name": "legacy Wiki alias remains functional",
+      "passed": true
+    },
+    {
+      "name": "recovery: #/wiki/missing/overview",
+      "passed": true
+    },
+    {
+      "name": "recovery: #/wiki/site-archive/missing",
+      "passed": true
+    },
+    {
+      "name": "recovery: #/search/%",
+      "passed": true
+    },
+    {
+      "name": "recovery: #/missing",
+      "passed": true
+    },
+    {
+      "name": "filter matches data",
+      "passed": true
+    },
+    {
+      "name": "filter survives refresh",
+      "passed": true
+    },
+    {
+      "name": "search keyboard suggestions",
+      "passed": true
+    },
+    {
+      "name": "search locates exact resource",
+      "passed": true
+    },
+    {
+      "name": "search query preserved",
+      "passed": true
+    },
+    {
+      "name": "search locates exact artwork",
+      "passed": true
+    },
+    {
+      "name": "gallery references retained",
+      "passed": true
+    },
+    {
+      "name": "artist links retained",
+      "passed": true
+    },
+    {
+      "name": "QQ copy output",
+      "passed": true
+    },
+    {
+      "name": "code copy output",
+      "passed": true
+    },
+    {
+      "name": "background can be disabled separately",
+      "passed": true
+    },
+    {
+      "name": "star trail defaults to on",
+      "passed": true
+    },
+    {
+      "name": "mouse movement draws stars with background disabled",
+      "passed": true
+    },
+    {
+      "name": "trail stops requesting frames after fading",
+      "passed": true
+    },
+    {
+      "name": "touch does not generate stars",
+      "passed": true
+    },
+    {
+      "name": "trail does not intercept input",
+      "passed": true
+    },
+    {
+      "name": "trail can be disabled and choice persists",
+      "passed": true
+    },
+    {
+      "name": "background disabled choice persists",
+      "passed": true
+    },
+    {
+      "name": "trail can be reenabled and choice persists",
+      "passed": true
+    },
+    {
+      "name": "effects can be enabled",
+      "passed": true
+    },
+    {
+      "name": "effect choice persists",
+      "passed": true
+    },
+    {
+      "name": "reduced motion takes priority",
+      "passed": true
+    },
+    {
+      "name": "reduced motion stops both canvases",
+      "passed": true
+    },
+    {
+      "name": "article reflows at 200 percent text size",
+      "passed": true
+    }
+  ],
+  "errors": [],
+  "expectedBlockedRequests": 97,
+  "browser": "154.0.4258.37",
+  "passed": true
+}

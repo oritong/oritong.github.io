@@ -3,70 +3,49 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#050914" />
+    <meta name="theme-color" content="#080f1c" />
     <meta name="description" content="Oritong 的个人档案、常用资源、项目记录与 Wiki。" />
-    <title>Oritong — 个人档案</title>
+    <title>哦里冻 Oritong · 个人空间</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="styles.css" />
     <script src="content.js" defer></script>
+    <script src="site-core.js" defer></script>
     <script src="starfield.js" defer></script>
     <script src="app.js" defer></script>
   </head>
   <body>
+    <a class="skip-link" href="#page-content">跳至正文</a>
     <canvas id="starfield" aria-hidden="true"></canvas>
     <canvas id="star-trail" aria-hidden="true"></canvas>
-    <div class="space-glow space-glow-one" aria-hidden="true"></div>
-    <div class="space-glow space-glow-two" aria-hidden="true"></div>
-    <div class="site-shell">
-      <aside class="sidebar" id="sidebar">
-        <a class="wordmark" href="#/home" aria-label="Oritong 首页">
-          <span class="wordmark-mark">O.</span>
-          <span><strong>ORITONG</strong><small>PERSONAL INDEX</small></span>
-        </a>
-
-        <div class="sidebar-rule"></div>
-        <p class="sidebar-label">档案目录 <span>01—06</span></p>
-        <nav class="primary-nav" aria-label="主要导航">
-          <a href="#/home" data-route="home"><span class="nav-number">01</span>概览</a>
-          <a href="#/profile" data-route="profile"><span class="nav-number">02</span>个人介绍</a>
-          <a href="#/resources" data-route="resources"><span class="nav-number">03</span>常用资源</a>
-          <a href="#/projects" data-route="projects"><span class="nav-number">04</span>参与项目</a>
-          <a href="#/wiki/diamond-continent-plus/translation-method" data-route="wiki"><span class="nav-number">05</span>项目 Wiki</a>
-          <a href="#/gallery" data-route="gallery"><span class="nav-number">06</span>个人图库</a>
+    <header class="site-header">
+      <div class="header-inner">
+        <a class="wordmark" href="#/home" aria-label="哦里冻 Oritong 首页"><span class="wordmark-symbol" aria-hidden="true">o.</span><span>哦里冻 <small>oritong</small></span></a>
+        <button class="menu-toggle" id="menu-toggle" type="button" aria-expanded="false" aria-controls="site-navigation">菜单 <span aria-hidden="true">☰</span></button>
+        <nav class="primary-nav" id="site-navigation" aria-label="主要导航">
+          <a href="#/home" data-route="home">首页</a>
+          <a href="#/projects" data-route="projects">项目</a>
+          <a href="#/wiki" data-route="wiki">Wiki</a>
+          <a href="#/profile" data-route="profile">关于</a>
+          <a href="#/resources" data-route="resources">资源</a>
+          <a href="#/gallery" data-route="gallery">图库</a>
+          <button class="menu-close" id="menu-close" type="button">关闭菜单 <span aria-hidden="true">×</span></button>
         </nav>
-
-        <div class="sidebar-bottom">
-          <button class="motion-toggle" id="motion-toggle" type="button" aria-pressed="true"><span aria-hidden="true">✦</span><span id="motion-label">星空动态：开启</span></button>
-          <div class="availability"><span></span>静态站点 · 可部署</div>
-          <a class="sidebar-github" href="#/wiki/site-archive/deploy">部署指南 <span>↗</span></a>
-          <small class="sidebar-date">EST. 2026 <i>·</i> BUILD IN PUBLIC</small>
+        <div class="search-area" id="search-area">
+          <label class="search-wrap" for="site-search"><span aria-hidden="true">⌕</span><span class="sr-only">搜索项目、Wiki 与个人空间</span><input id="site-search" type="search" placeholder="搜索这里…" autocomplete="off" aria-controls="search-results" aria-expanded="false" /><kbd aria-hidden="true">/</kbd></label>
+          <div class="search-results" id="search-results" role="region" aria-label="搜索建议" hidden></div>
         </div>
-      </aside>
-
-      <main class="main-area">
-        <header class="topbar">
-          <button class="menu-toggle" id="menu-toggle" type="button" aria-label="打开导航" aria-expanded="false">☰</button>
-          <div class="breadcrumbs"><span>ORITONG</span><b>/</b><strong id="current-section">概览</strong></div>
-          <div class="topbar-tools">
-            <label class="search-wrap" for="site-search">
-              <span aria-hidden="true">⌕</span>
-              <input id="site-search" type="search" aria-label="搜索档案、资源与 Wiki" placeholder="搜索档案、资源与 Wiki" autocomplete="off" />
-              <kbd>/</kbd>
-            </label>
-            <div class="search-results" id="search-results" hidden></div>
-            <a class="topbar-year" href="#/wiki/site-archive/deploy">2026 <span>↗</span></a>
-          </div>
-        </header>
-        <div id="page-content" class="page-content" aria-live="polite"></div>
-        <footer class="site-footer">
-          <span>© <span id="footer-year">2026</span> ORITONG</span>
-          <span>一个持续整理中的个人档案</span>
-          <a href="#/wiki/site-archive/deploy">GITHUB PAGES <span>↗</span></a>
-        </footer>
-      </main>
-    </div>
+      </div>
+    </header>
     <div class="mobile-backdrop" id="mobile-backdrop" hidden></div>
+    <main id="page-content" class="page-content" tabindex="-1"></main>
+    <p id="route-status" class="sr-only" role="status" aria-live="polite"></p>
+    <p id="search-status" class="sr-only" role="status" aria-live="polite"></p>
+    <noscript><div class="noscript-note">欢迎来到哦里冻的个人空间。项目与 Wiki 的浏览需要 JavaScript，请在浏览器中启用。你也可以访问 <a href="https://github.com/oritong">GitHub 主页</a>。</div></noscript>
+    <footer class="site-footer">
+      <div class="footer-main"><div class="footer-about" id="footer-about"></div><nav aria-label="页脚导航"><a href="#/projects">所有项目</a><a href="#/wiki">项目 Wiki</a><a href="#/profile">关于我</a><a href="#/resources">常用资源</a><a href="#/gallery">个人图库</a></nav><div class="footer-socials" id="footer-socials"></div></div>
+      <div class="footer-bottom"><span>© <span id="footer-year">2026</span> ORITONG</span><a href="#/wiki/site-archive/deploy">网站部署说明 ↗</a><details class="appearance-settings"><summary>外观设置</summary><div class="appearance-panel"><p>让这里安静一点，或者留一点星光。</p><button id="motion-toggle" type="button" aria-pressed="true"><span id="motion-label">背景星空与流星：开启</span></button><button id="trail-toggle" type="button" aria-pressed="true"><span id="trail-label">星星拖尾：开启</span></button><small id="motion-hint">背景动画与鼠标拖尾默认开启；遵循系统的减少动态设置。</small></div></details></div>
+    </footer>
   </body>
 </html>

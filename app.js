@@ -1,237 +1,250 @@
 (() => {
+  'use strict';
   const data = window.SITE_CONTENT;
-  const page = document.getElementById("page-content");
-  const currentSection = document.getElementById("current-section");
-  const searchInput = document.getElementById("site-search");
-  const searchResults = document.getElementById("search-results");
-  const sidebar = document.getElementById("sidebar");
-  const menuToggle = document.getElementById("menu-toggle");
-  const backdrop = document.getElementById("mobile-backdrop");
-  const escapeHtml = (value = "") => String(value).replace(/[&<>"']/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]);
-  const hrefFor = (route) => `#/${route}`;
-  const navLabels = { home: "概览", profile: "个人介绍", resources: "常用资源", projects: "参与项目", wiki: "项目 Wiki", gallery: "个人图库" };
-
-  function locationState() {
-    const parts = decodeURIComponent(location.hash.replace(/^#\/?/, "")).split("/").filter(Boolean);
-    return { route: parts[0] || "home", projectId: parts[1] || data.projects[0]?.id, pageId: parts[2] || "overview", query: parts[0] === "search" ? parts.slice(1).join("/") : "" };
+  const core = window.SITE_CORE;
+  const page = document.getElementById('page-content');
+  if (!data || !core) {
+    page.innerHTML = '<h1>内容暂时没有载入</h1><p>请刷新页面，或检查站点文件是否完整。</p>';
+    return;
   }
+  const { escapeHtml: e, pages, projectHref, wikiHref, safeUrl, segment } = core;
+  const projects = core.projects(data);
+  const searchIndex = core.searchIndex(data);
+  const searchInput = document.getElementById('site-search');
+  const searchResults = document.getElementById('search-results');
+  const nav = document.getElementById('site-navigation');
+  const menuToggle = document.getElementById('menu-toggle');
+  const backdrop = document.getElementById('mobile-backdrop');
+  const mobile = matchMedia('(max-width: 959px)');
+  const navLabels = { home: '首页', profile: '关于我', projects: '项目', wiki: '项目 Wiki', resources: '常用资源', gallery: '个人图库', search: '搜索结果', 'not-found': '找不到页面' };
+  const originalDescription = document.querySelector('meta[name=description]').content;
+  const external = 'target="_blank" rel="noopener noreferrer"';
+  let state;
+  let menuOpen = false;
+  let searchTimer;
 
-  function resourceCard(item, index) {
-    return `<a class="resource-row" href="${escapeHtml(item.url)}" target="_blank" rel="noreferrer">
-      <span class="resource-mark ${escapeHtml(item.color)}">${escapeHtml(item.mark)}</span>
-      <span class="resource-copy"><strong>${escapeHtml(item.name)}</strong><small>${escapeHtml(item.description)}</small></span>
-      <span class="resource-category">${escapeHtml(item.category)}</span><span class="external-arrow" aria-hidden="true">↗</span>
-    </a>`;
+  function heading(kicker, title, description = '') {
+    return `<header class="page-heading"><p class="eyebrow">${e(kicker)}</p><h1 tabindex="-1">${e(title)}</h1>${description ? `<p>${e(description)}</p>` : ''}</header>`;
   }
-
-  function projectCard(project, participation = false) {
-    return `<article class="project-row">
-      <div class="project-index">${escapeHtml(project.year || "—")}</div>
-      <div class="project-main"><div class="project-title-line"><h3>${escapeHtml(project.name)}</h3><span class="status"><i></i>${escapeHtml(project.status || "进行中")}</span></div>
-        <p>${escapeHtml(project.summary)}</p><div class="tag-list">${(project.tags || []).map(tag => `<span>${escapeHtml(tag)}</span>`).join("")}</div></div>
-      <a class="project-open" href="${hrefFor(`wiki/${project.id}/overview`)}" aria-label="打开 ${escapeHtml(project.name)} 的 Wiki">↗</a>
-    </article>`;
+  function sectionHeading(kicker, title, href = '', label = '') {
+    return `<div class="section-heading"><div><p class="eyebrow">${e(kicker)}</p><h2>${e(title)}</h2></div>${href ? `<a class="text-link" href="${e(href)}">${e(label)} <span aria-hidden="true">↗</span></a>` : ''}</div>`;
   }
-
-  function emptyState(title, description) {
-    return `<div class="empty-state"><div class="empty-mark">+</div><h3>${escapeHtml(title)}</h3><p>${escapeHtml(description)}</p><a href="${hrefFor("wiki/site-archive/structure")}">查看内容结构 <span>↗</span></a></div>`;
+  function breadcrumbs(items) {
+    return `<nav class="breadcrumbs" aria-label="面包屑"><ol><li><a href="#/home">首页</a></li>${items.map((item, i) => `<li>${item.href && i < items.length - 1 ? `<a href="${e(item.href)}">${e(item.title)}</a>` : `<span aria-current="page">${e(item.title)}</span>`}</li>`).join('')}</ol></nav>`;
   }
-
-  function sectionHeading(kicker, title, description = "") {
-    return `<div class="section-heading"><div><p class="eyebrow">${escapeHtml(kicker)}</p><h1>${escapeHtml(title)}</h1></div>${description ? `<p class="section-description">${escapeHtml(description)}</p>` : ""}</div>`;
+  function emptyState(title, description, href = '#/projects', label = '查看项目') {
+    return `<section class="empty-state"><h2>${e(title)}</h2><p>${e(description)}</p><a class="text-link" href="${e(href)}">${e(label)} <span aria-hidden="true">↗</span></a></section>`;
   }
+  function notFound(message = '这个地址没有对应的内容。可以返回首页，或从 Wiki 目录重新查找。') {
+    return heading('迷路也没关系', '这里还没有这一页', message) + `<div class="actions"><a class="button button-primary" href="#/home">回到首页</a><a class="button" href="#/wiki">浏览 Wiki</a></div>`;
+  }
+  const tags = project => `<ul class="tag-list" aria-label="项目标签">${(project.tags || []).map(tag => `<li>${e(tag)}</li>`).join('')}</ul>`;
+  function projectLinks(project) {
+    return (project.links || []).filter(link => link.url).map(link => `<a class="button" href="${e(safeUrl(link.url))}" ${external}>${e(link.label)} <span aria-hidden="true">↗</span></a>`).join('');
+  }
+  function projectCard(project, level = 2) {
+    return `<article class="project-card"><div class="project-card-meta"><span>${e(project.kind)}</span>${project.status ? `<span class="status">${e(project.status)}</span>` : ''}</div><h${level}><a href="${e(projectHref(project))}">${e(project.name)}</a></h${level}><p>${e(project.description || project.summary)}</p>${tags(project)}<div class="actions"><a class="button" href="${e(projectHref(project))}" aria-label="了解项目：${e(project.name)}">了解项目 <span aria-hidden="true">↗</span></a>${pages(project).length ? `<a class="text-link" href="${e(wikiHref(project))}" aria-label="阅读 ${e(project.name)} 的 Wiki">阅读 Wiki</a>` : ''}${projectLinks(project)}</div></article>`;
+  }
+  function documentList(project) {
+    return `<ul class="project-document-list">${pages(project).map(article => `<li><a href="${e(wikiHref(project, article))}"><span>${e(article.section || '—')}</span><div>${e(article.title)}${article.status ? ` <small class="status">${e(article.status)}</small>` : ''}</div><b aria-hidden="true">↗</b></a></li>`).join('')}</ul>`;
+  }
+  const socialLink = link => `<a href="${e(safeUrl(link.url))}" ${external}>${e(link.label)} <span aria-hidden="true">↗</span></a>`;
+  const featuredSocials = data.profile.links.filter(link => ['Bilibili', 'GitHub', 'MC百科'].includes(link.name));
 
   function renderHome() {
-    const project = data.projects[0];
-    return `<section class="cover" aria-label="个人档案封面">
-        <div class="cover-shade"></div>
-        <div class="celestial-art" aria-hidden="true"><div class="celestial-orbit orbit-outer"><i></i></div><div class="celestial-orbit orbit-inner"><i></i></div><div class="celestial-core"></div><span class="celestial-spark">✦</span></div>
-        <div class="cover-meta"><span>✦ PERSONAL UNIVERSE</span><span>EST. 2026</span></div>
-        <div class="cover-title"><p>你好，欢迎来到</p><h1>${escapeHtml(data.profile.name)}的个人网站！</h1><div class="cover-bottom"><span>${escapeHtml(data.profile.role)}</span><span>01 — 06</span></div></div>
-      </section>
-      <section class="overview-intro">
-        <div class="intro-statement"><p class="eyebrow">这段时间</p><h2>${escapeHtml(data.profile.intro)}</h2><a class="text-link" href="${hrefFor("profile")}">认识我 <span>↗</span></a></div>
-        <div class="overview-facts"><div><span>项目档案</span><strong>${String(data.projects.length + data.participations.length).padStart(2, "0")}</strong></div><div><span>资源收录</span><strong>${String(data.resources.length).padStart(2, "0")}</strong></div><div><span>Wiki 章节</span><strong>${String(data.projects.reduce((sum, item) => sum + item.pages.length, 0)).padStart(2, "0")}</strong></div></div>
-      </section>
-      <section class="home-columns">
-        <div class="home-projects"><div class="section-bar"><div><p class="eyebrow">SELECTED WORK</p><h2>最近的项目</h2></div><a class="text-link" href="${hrefFor("projects")}">全部项目 <span>↗</span></a></div>
-          ${project ? projectCard(project) : emptyState("还没有项目", "项目记录将在这里显示。")}
-        </div>
-        <div class="home-resources"><div class="section-bar"><div><p class="eyebrow">BOOKMARKS</p><h2>常用资源</h2></div><a class="text-link" href="${hrefFor("resources")}">资源目录 <span>↗</span></a></div>
-          ${data.resources.slice(0, 4).map(resourceCard).join("")}
-        </div>
-      </section>`;
+    const selected = (data.home?.featuredProjects || []).map(id => projects.find(p => p.id === id)).filter(Boolean).slice(0, 2);
+    const current = (data.home?.currentProjects || []).map(id => projects.find(p => p.id === id)).filter(Boolean);
+    return `<section class="hero" aria-labelledby="home-title"><div><p class="eyebrow">初次（也许不是）见面，欢迎来玩！</p><h1 id="home-title" tabindex="-1">你好，<br>我是<span>${e(data.profile.name)}</span>。</h1><p class="hero-role">${e(data.profile.role)}</p><p class="hero-intro">${e(data.profile.intro)}</p><div class="actions"><a class="button button-primary" href="#/profile">多认识我一点 <span aria-hidden="true">↗</span></a><a class="text-link" href="#/projects">看看我的项目</a></div></div><aside class="hero-aside" aria-label="一点关于我"><img class="hero-avatar" src="${e(data.profile.avatar)}" alt="${e(data.profile.name)}的头像" width="192" height="192" draggable="false"><p>${e(data.profile.introduction[2] || '')}</p><small>ORITONG / PERSONAL SPACE</small></aside></section>
+    <section class="home-section now-layout" aria-labelledby="now-title"><div><p class="eyebrow">慢慢做，慢慢记录</p><h2 id="now-title">这段时间</h2><p class="now-intro">正在维护的项目，和逐渐补齐的说明。</p></div><ul class="now-list">${current.map(project => `<li><a href="${e(projectHref(project))}"><span><strong>${e(project.name)}</strong><small>${e(project.role)}</small></span><span class="status">${e(project.status)}</span></a></li>`).join('')}</ul></section>
+    <section class="home-section">${sectionHeading('从这里开始看看', '我的项目', '#/projects', '查看全部项目')}<div class="${selected.length === 1 ? 'featured-layout' : 'project-grid'}">${selected.map(project => projectCard(project, 3)).join('')}</div></section>
+    <section class="home-section"><div class="wiki-door"><div><p class="eyebrow">项目旁边的笔记本</p><h2>Project Wiki</h2><p>项目资料、技术说明和整理中的游玩流程，都收在这里。</p></div><a class="text-link" href="#/wiki">翻开 Wiki <span aria-hidden="true">↗</span></a></div></section>
+    <section class="home-section">${sectionHeading('还有一些喜欢的东西', '随处逛逛')}<div class="shelf-grid"><a class="shelf-link" href="#/gallery"><h3>个人图库</h3><p>${e(data.gallery.description)}</p><span>去图库看看 ↗</span></a><a class="shelf-link" href="#/resources"><h3>常用资源</h3><p>开发文档、设计灵感，以及平时会用到的小工具。</p><span>打开资源目录 ↗</span></a></div><div class="social-inline" aria-label="在其他地方找到我">${featuredSocials.map(socialLink).join('')}<a href="#/profile">更多主页与社群 ↗</a></div></section>`;
+  }
+  function renderProjects() {
+    return heading('一些正在生长的想法', '项目与创作', '做过的、参与的，还有正在整理的。感兴趣的话，可以先看看项目，再读读它的 Wiki。') + (projects.length ? `<div class="project-grid">${projects.map(project => projectCard(project)).join('')}</div>` : emptyState('项目还在整理中', '新的项目记录会出现在这里。', '#/home', '回到首页'));
+  }
+  function renderProject(project) {
+    return breadcrumbs([{ title: '项目', href: '#/projects' }, { title: project.name }]) + heading(project.kind, project.name, project.description || project.summary) + `<div class="project-detail-layout"><section><h2>关于这个项目</h2><p class="project-description">${e(project.summary)}</p><div class="actions" style="margin-top:var(--space-6)">${pages(project).length ? `<a class="button button-primary" href="${e(wikiHref(project))}">进入项目 Wiki <span aria-hidden="true">↗</span></a>` : ''}${projectLinks(project)}</div><section class="home-section"><h2>项目笔记</h2><p class="project-description">${pages(project).length ? '按需要挑一篇，继续了解项目。' : '这个项目暂时没有公开的 Wiki，已有介绍会保留在这里。'}</p>${documentList(project)}</section></section><aside><dl class="project-facts">${project.status ? `<dt>目前状态</dt><dd>${e(project.status)}</dd>` : ''}${project.role ? `<dt>我的角色</dt><dd>${e(project.role)}</dd>` : ''}${project.outcome ? `<dt>记录与成果</dt><dd>${e(project.outcome)}</dd>` : ''}${project.year && project.year !== '—' ? `<dt>记录年份</dt><dd>${e(project.year)}</dd>` : ''}</dl><div style="margin-top:var(--space-6)">${tags(project)}</div></aside></div>`;
+  }
+  function renderWikiIndex() {
+    const documented = projects.filter(project => pages(project).length);
+    return heading('项目旁边的笔记本', '项目 Wiki', '按项目整理的资料与说明。选一份笔记，慢慢往下读。') + (documented.length ? `<div class="project-grid">${documented.map(project => `<section class="wiki-index-card"><p class="eyebrow">${e(project.kind)} · ${pages(project).length} 篇文档</p><h2>${e(project.name)}</h2><p>${e(project.summary)}</p>${documentList(project)}<a class="text-link" href="${e(projectHref(project))}">先了解这个项目 ↗</a></section>`).join('')}</div>` : emptyState('笔记还在整理中', '可以先从项目介绍开始了解。'));
   }
 
+  function inline(text) {
+    return e(text).replace(/`([^`]+)`/g, '<code>$1</code>');
+  }
+  function renderBlock(block, index) {
+    const id = e(block.id || `section-${index + 1}`);
+    if (block.type === 'heading') return `<h2 id="${id}" tabindex="-1">${e(block.text)}</h2>`;
+    if (block.type === 'subheading') return `<h3 id="${id}" tabindex="-1">${e(block.text)}</h3>`;
+    if (block.type === 'callout') return `<aside class="wiki-callout"><strong>${e(block.title || '注意')}</strong><p>${inline(block.text)}</p></aside>`;
+    if (block.type === 'code') return `<div class="code-block"><div><span>${e(block.caption || block.language || '代码')}</span><button type="button" data-copy-code="code-${index}" aria-label="复制此段代码">复制</button></div><pre tabindex="0" aria-label="${e(block.caption || '代码片段')}"><code id="code-${index}">${e(block.text)}</code></pre></div>`;
+    if (block.type === 'list') { const tag = block.ordered ? 'ol' : 'ul'; return `<${tag}>${(block.items || []).map(item => `<li>${inline(item)}</li>`).join('')}</${tag}>`; }
+    if (block.type === 'table') return `<div class="table-scroll" tabindex="0" role="region" aria-label="${e(block.caption || '资料表格')}"><table>${block.caption ? `<caption>${e(block.caption)}</caption>` : ''}<thead><tr>${(block.headers || []).map(text => `<th scope="col">${e(text)}</th>`).join('')}</tr></thead><tbody>${(block.rows || []).map(row => `<tr>${row.map(text => `<td>${inline(text)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+    return `<p>${inline(block.text || '')}</p>`;
+  }
+  function renderWiki(project, article) {
+    const blocks = core.articleBlocks(article);
+    const headings = blocks.map((block, index) => ({ ...block, anchor: block.id || `section-${index + 1}` })).filter(block => block.type === 'heading');
+    const list = pages(project);
+    const index = list.indexOf(article);
+    const previous = list[index - 1];
+    const next = list[index + 1];
+    return breadcrumbs([{ title: 'Wiki', href: '#/wiki' }, { title: project.name, href: projectHref(project) }, { title: article.title }]) + `<div class="wiki-layout"><aside class="wiki-sidebar"><h2>${e(project.name)}</h2><p>${e(project.kind)}</p><details id="wiki-directory" ${mobile.matches ? '' : 'open'}><summary>项目目录 · ${list.length} 篇</summary><nav aria-label="${e(project.name)}文档目录">${list.map(item => `<a class="wiki-link" href="${e(wikiHref(project, item))}" ${item.id === article.id ? 'aria-current="page"' : ''}><span>${e(item.section || '—')}</span>${e(item.title)}</a>`).join('')}</nav></details><a class="text-link" href="${e(projectHref(project))}">← 项目介绍</a></aside><article class="wiki-article"><header><div class="article-meta"><span>项目笔记 / ${e(article.section || '')}</span>${article.status ? `<span class="status">${e(article.status)}</span>` : ''}${article.version ? `<span>适用版本 ${e(article.version)}</span>` : ''}${article.updatedAt ? `<span>更新于 <time datetime="${e(article.updatedAt)}">${e(article.updatedAt)}</time></span>` : ''}</div><h1 tabindex="-1">${e(article.title)}</h1><p class="article-deck">${e(article.description || project.summary)}</p></header>${headings.length > 1 ? `<details class="article-toc" open><summary>这篇笔记里</summary><nav aria-label="本文目录"><ul>${headings.map(h => `<li><a data-section="${e(h.anchor)}" href="${e(wikiHref(project, article))}?section=${segment(h.anchor)}">${e(h.text)}</a></li>`).join('')}</ul></nav></details>` : ''}<div class="article-body">${blocks.map(renderBlock).join('')}</div>${article.id === 'overview' ? `<dl class="project-facts" style="margin-top:var(--space-8)"><dt>我的角色</dt><dd>${e(project.role || '尚未填写')}</dd><dt>记录与成果</dt><dd>${e(project.outcome || '尚未填写')}</dd></dl>` : ''}${previous || next ? `<nav class="article-pagination" aria-label="相邻文章">${previous ? `<a href="${e(wikiHref(project, previous))}" data-direction="previous"><small>← 上一篇</small>${e(previous.title)}</a>` : ''}${next ? `<a href="${e(wikiHref(project, next))}" data-direction="next"><small>下一篇 →</small>${e(next.title)}</a>` : ''}</nav>` : ''}<p class="copy-status" id="copy-status" role="status"></p></article></div>`;
+  }
   function renderProfile() {
-    return `${sectionHeading("PROFILE / 02", "关于哦里冻", "在方块世界里搭建故事，也为旋律写下新的旅程。")}
-      <section class="profile-layout"><div class="profile-photo"><img src="${escapeHtml(data.profile.avatar)}" alt="${escapeHtml(data.profile.name)} 的头像" draggable="false" /><span>${escapeHtml(data.profile.handle)}<br/>PERSONAL ARCHIVE</span></div>
-        <div class="profile-content"><p class="eyebrow">A LITTLE ABOUT ME</p><h2>你好，我是<br/><strong>${escapeHtml(data.profile.name)}！</strong></h2>
-          <div class="profile-story">${data.profile.introduction.map((paragraph, index) => `<p class="${index === data.profile.introduction.length - 1 ? "story-invitation" : ""}">${escapeHtml(paragraph)}</p>`).join("")}</div>
-          <div class="profile-roles"><div><span>创作身份</span><strong>Minecraft 整合包制作者</strong><small>把喜欢的元素收进一段新的冒险</small></div><div><span>音乐创作</span><strong>《Blophy》官方谱师</strong><small>把旋律写成可以亲手游玩的节奏</small></div></div>
-          <section class="profile-socials"><div class="socials-heading"><div><p class="eyebrow">FIND ME AROUND</p><h3>我的主页与社群</h3></div><span>LINKS / 10</span></div>
-            <div class="social-links">${data.profile.links.map(link => `<a class="social-link" href="${escapeHtml(link.url)}" target="_blank" rel="noopener noreferrer"><span class="social-mark">${escapeHtml(link.mark)}</span><span class="social-copy"><strong>${escapeHtml(link.label)}</strong><small>${escapeHtml(link.description)}</small></span><span class="social-arrow" aria-hidden="true">↗</span></a>`).join("")}</div>
-            <div class="group-links">${data.profile.groups.map(group => `<div class="group-link"><span class="group-mark" aria-hidden="true">Q</span><span class="group-copy"><strong>${escapeHtml(group.name)}</strong><small>${escapeHtml(group.description)}</small></span><button type="button" class="group-copy-button" data-copy-group="${escapeHtml(group.number)}" aria-label="复制${escapeHtml(group.name)}群号 ${escapeHtml(group.number)}" title="复制群号"><span>${escapeHtml(group.number)}</span><b aria-hidden="true">复制</b></button></div>`).join("")}</div>
-            <p class="copy-status" id="copy-status" aria-live="polite" role="status"></p>
-          </section>
-          <a class="profile-gallery-link" href="${hrefFor("gallery")}"><span><small>MY COMMISSION ARCHIVE</small><strong>来个人图库逛逛</strong></span><b>↗</b></a>
-        </div>
-      </section>
-      <section class="profile-footnote"><span>ONE MORE THING</span><p>如果你喜欢这些作品，欢迎支持创作，也欢迎把喜欢的那一瞬分享给我。</p></section>`;
+    return heading('多认识我一点', `关于${data.profile.name}`, '在方块世界里搭建故事，也为旋律写下新的旅程。') + `<div class="profile-layout"><aside><div class="profile-photo"><img src="${e(data.profile.avatar)}" alt="${e(data.profile.name)}的头像" width="240" height="240" draggable="false"></div><p class="list-note">${e(data.profile.handle)}</p></aside><div><div class="profile-story">${data.profile.introduction.map(text => `<p>${e(text)}</p>`).join('')}</div><div class="profile-roles"><div><small>创作身份</small><strong>Minecraft 整合包制作者</strong><small>把喜欢的元素收进一段新的冒险</small></div><div><small>音乐创作</small><strong>《Blophy》官方谱师</strong><small>把旋律写成可以亲手游玩的节奏</small></div></div><a class="text-link" style="margin-top:var(--space-6)" href="#/gallery">来个人图库逛逛 ↗</a></div></div><section class="profile-socials"><h2>在这些地方找到我</h2><div class="social-links">${data.profile.links.map(link => `<a class="social-link" href="${e(safeUrl(link.url))}" ${external}><span class="social-mark" aria-hidden="true">${e(link.mark)}</span><span class="social-copy"><strong>${e(link.label)}</strong><small>${e(link.description)}</small></span><span class="social-arrow" aria-hidden="true">↗</span></a>`).join('')}</div><div class="group-links">${data.profile.groups.map(group => `<div class="group-link"><div><strong>${e(group.name)}</strong><small>${e(group.description)}</small></div><button type="button" class="group-copy-button" data-copy-group="${e(group.number)}" aria-label="复制${e(group.name)}群号 ${e(group.number)}"><span>${e(group.number)}</span><b>复制</b></button></div>`).join('')}</div><p class="copy-status" id="copy-status" role="status"></p></section><section class="home-section"><h2>还有一句话</h2><p class="project-description">如果你喜欢这些作品，欢迎支持创作，也欢迎把喜欢的那一瞬分享给我。</p></section>`;
   }
-
+  function resourceCard(item) {
+    const index = data.resources.indexOf(item);
+    return `<a id="resource-${index + 1}" class="resource-row" href="${e(safeUrl(item.url))}" ${external}><span class="resource-mark" aria-hidden="true">${e(item.mark)}</span><span class="resource-copy"><span class="resource-category">${e(item.category)}</span><strong>${e(item.name)}</strong><small>${e(item.description)}</small></span><span class="external-arrow" aria-hidden="true">↗</span></a>`;
+  }
+  function renderResources() {
+    const categories = ['全部', ...new Set(data.resources.map(item => item.category))];
+    const category = categories.includes(state.category) ? state.category : '全部';
+    const items = category === '全部' ? data.resources : data.resources.filter(item => item.category === category);
+    return heading('收藏夹的一角', '常用资源', `${data.resources.length} 个书签，按需要慢慢翻。`) + `<div class="filter-bar" role="group" aria-label="资源分类">${categories.map(name => `<button class="filter-button" type="button" data-filter="${e(name)}" aria-pressed="${name === category}">${e(name)}<span>${name === '全部' ? data.resources.length : data.resources.filter(item => item.category === name).length}</span></button>`).join('')}</div><div class="resource-list" id="resource-list">${items.map(resourceCard).join('')}</div><p id="filter-status" class="sr-only" role="status"></p><p class="list-note">资源链接在新标签页打开 ↗</p>`;
+  }
   function renderGallery() {
     const gallery = data.gallery;
-    const items = gallery.artworks || [];
-    return `${sectionHeading("ARTWORKS / 06", gallery.title, gallery.description)}
-      <section class="gallery-notice"><span class="notice-icon">✳</span><p><strong>请尊重画师与创作者</strong><br/>${escapeHtml(gallery.rightsNotice)}</p><span class="notice-stamp">NO AI<br/>TRAINING</span></section>
-      ${items.length ? `<div class="gallery-grid">${items.map((artwork, index) => `<figure class="gallery-artwork"><div class="gallery-image-frame"><img src="${escapeHtml(artwork.image)}" alt="${escapeHtml(artwork.alt || artwork.title || "个人收藏稿件")}" loading="lazy" draggable="false" /><span class="gallery-image-mark">✦ ${escapeHtml(gallery.rightsNotice.split("。")[0])}</span></div><figcaption><div><strong>${escapeHtml(artwork.title || `收藏稿件 ${String(index + 1).padStart(2, "0")}`)}</strong><small>${artwork.artistUrl ? `<a class="gallery-artist-link" href="${escapeHtml(artwork.artistUrl)}" target="_blank" rel="noopener noreferrer" title="访问 ${escapeHtml(artwork.artist)} 的主页">画师 · ${escapeHtml(artwork.artist)} ↗</a>` : escapeHtml(artwork.artist ? `画师 · ${artwork.artist}` : "个人约稿")}</small></div><span>${escapeHtml(artwork.date || "COMMISSIONS")}</span></figcaption>${artwork.note ? `<p class="gallery-caption-note">${escapeHtml(artwork.note)}</p>` : ""}</figure>`).join("")}</div>` : `<div class="gallery-empty"><div class="gallery-empty-art"><span class="gallery-star star-a">✦</span><span class="gallery-star star-b">✧</span><span class="gallery-empty-orbit"></span><span class="gallery-empty-core">O.</span><span class="gallery-empty-caption">A PLACE FOR<br/>LITTLE WONDERS</span></div><div><p class="eyebrow">COLLECTED WITH CARE</p><h2>喜欢的瞬间，<br/>值得好好收藏。</h2><p>约稿整理中，新的作品很快会在这里和你见面。</p></div></div>`}
-      <p class="gallery-footer-note"><span>✦</span> 每一份创作都值得被好好对待 <span>✦</span></p>`;
+    return heading('喜欢的瞬间，好好收藏', gallery.title, gallery.description) + `<aside class="gallery-notice"><strong>请尊重画师与创作者</strong><p>${e(gallery.rightsNotice)}</p></aside>${gallery.artworks.length ? `<div class="gallery-grid">${gallery.artworks.map((artwork, i) => `<figure class="gallery-artwork" id="artwork-${i + 1}" tabindex="-1"><div class="gallery-image-frame"><img src="${e(artwork.image)}" alt="${e(artwork.alt || artwork.title || '个人收藏稿件')}" loading="lazy" decoding="async" draggable="false"><span class="gallery-image-mark">${e(gallery.rightsNotice.split('。')[0])}</span></div><figcaption><div><strong>${e(artwork.title || '收藏稿件')}</strong><small>${artwork.artistUrl ? `<a class="gallery-artist-link" href="${e(safeUrl(artwork.artistUrl))}" ${external}>画师 · ${e(artwork.artist)} ↗</a>` : e(artwork.artist || '个人约稿')}</small></div>${artwork.date ? `<small>${e(artwork.date)}</small>` : ''}</figcaption>${artwork.note ? `<p class="gallery-caption-note">${e(artwork.note)}</p>` : ''}</figure>`).join('')}</div>` : emptyState('喜欢的瞬间，值得好好收藏', '约稿整理中，新的作品会在这里和你见面。', '#/profile', '关于我')}`;
+  }
+  function renderSearch(query) {
+    const results = core.search(searchIndex, query);
+    return heading('在这里找一找', query ? `“${query}” 的搜索结果` : '搜索个人空间', query ? `找到 ${results.length} 条相关记录` : '在页头输入项目、资源、画师或 Wiki 中的关键词。') + (results.length ? `<div class="search-page-results">${results.map(item => `<a class="search-page-row" href="${e(item.href)}"><span>${e(item.type)}</span><div><strong>${e(item.title)}</strong><small>${e(item.summary.length > 150 ? item.summary.slice(0, 150) + '…' : item.summary)}</small></div><b aria-hidden="true">↗</b></a>`).join('')}</div>` : emptyState(query ? '还没找到相关内容' : '从一个关键词开始', '可以试试“Minecraft”“翻译”或“资源”。', '#/wiki', '浏览 Wiki 目录'));
   }
 
-  function renderResources() {
-    const categories = ["全部", ...new Set(data.resources.map(item => item.category))];
-    return `${sectionHeading("LIBRARY / 03", "常用资源", `${String(data.resources.length).padStart(2, "0")} 个书签 · 持续整理`)}
-      <div class="filter-bar" role="group" aria-label="资源分类">${categories.map((name, index) => `<button class="filter-button ${index === 0 ? "active" : ""}" data-filter="${escapeHtml(name)}" type="button">${escapeHtml(name)} <span>${index === 0 ? data.resources.length : data.resources.filter(item => item.category === name).length}</span></button>`).join("")}</div>
-      <div class="resource-list" id="resource-list">${data.resources.map(resourceCard).join("")}</div>
-      <p class="list-note">链接在新窗口打开 <span>↗</span></p>`;
-  }
-
-  function renderProjects() {
-    const records = [...data.projects.map(project => ({ ...project, recordType: "个人项目" })), ...data.participations.map(project => ({ ...project, recordType: "参与项目" }))];
-    return `${sectionHeading("WORK / 04", "参与项目", `${String(records.length).padStart(2, "0")} 个项目档案`)}
-      <div class="project-ledger"><div class="ledger-head"><span>年份</span><span>项目 / 角色 / 记录</span><span>Wiki</span></div>
-        ${records.length ? records.map(project => `<div class="project-record">${projectCard(project)}<span class="record-type">${escapeHtml(project.recordType)}</span></div>`).join("") : emptyState("项目记录待添加", "把参与的开源协作、团队项目或个人作品整理在这里。")}
-      </div><p class="page-note">每条项目记录都可以附带独立的 Wiki 页面，记录背景、过程和成果。</p>`;
-  }
-
-  function renderWiki(projectId, pageId) {
-    const project = data.projects.find(item => item.id === projectId) || data.projects[0];
-    if (!project) return `${sectionHeading("WIKI / 05", "项目 Wiki")}${emptyState("还没有项目 Wiki", "添加项目后即可建立文档目录。")}`;
-    const current = project.pages.find(item => item.id === pageId) || project.pages[0];
-    const contents = current.body.map((paragraph, index) => `<p>${escapeHtml(paragraph)}</p>${index === 0 && current.id === "overview" ? `<div class="wiki-callout"><span>INDEX</span><p>${escapeHtml(project.name)}<br/><small>${escapeHtml(project.kind)} · ${escapeHtml(project.year)}</small></p></div>` : ""}`).join("");
-    return `<div class="wiki-topline"><p class="eyebrow">WIKI / 05 <span>↗</span> ${escapeHtml(project.name.toUpperCase())}</p><a class="text-link" href="${hrefFor("projects")}">返回项目 <span>↗</span></a></div>
-      <div class="wiki-layout${project.wikiTheme === "plain" ? " wiki-plain" : ""}"><aside class="wiki-index"><p class="wiki-index-title">${escapeHtml(project.name)}</p><span class="wiki-index-meta">${escapeHtml(project.kind)} · ${escapeHtml(project.status)}</span><div class="wiki-index-rule"></div>
-        <nav aria-label="Wiki 页面目录">${project.pages.map(item => `<a class="wiki-link ${item.id === current.id ? "active" : ""}" href="${hrefFor(`wiki/${project.id}/${item.id}`)}"><span>${escapeHtml(item.section)}</span>${escapeHtml(item.title)}</a>`).join("")}</nav>
-        <div class="wiki-tech"><span>技术标签</span><div class="tag-list">${project.tags.map(tag => `<span>${escapeHtml(tag)}</span>`).join("")}</div></div></aside>
-        <article class="wiki-article"><div class="article-meta"><span>${escapeHtml(project.year)} — ${escapeHtml(current.section)}</span><span>PROJECT NOTES</span></div><h1>${escapeHtml(current.title)}</h1><p class="article-deck">${escapeHtml(project.summary)}</p>
-          <div class="article-rule"></div><div class="article-body">${contents}</div>
-          ${current.id === "overview" ? `<div class="wiki-outcome"><span>我的角色</span><strong>${escapeHtml(project.role)}</strong><span>项目成果</span><p>${escapeHtml(project.outcome)}</p></div>` : ""}
-          <div class="article-pagination">${project.pages.map((item, index) => `<a class="${item.id === current.id ? "current" : ""}" href="${hrefFor(`wiki/${project.id}/${item.id}`)}"><span>0${index + 1}</span>${escapeHtml(item.title)}</a>`).join("")}</div>
-        </article></div>`;
-  }
-
-  function renderSearchPage(query) {
-    const q = query.toLowerCase();
-    const results = collectSearchItems().filter(item => item.text.toLowerCase().includes(q));
-    return `${sectionHeading("SEARCH", `“${query}” 的搜索结果`, `找到 ${results.length} 条相关记录`)}<div class="search-page-results">${results.length ? results.map(item => `<a class="search-page-row" href="${item.href}"><span>${escapeHtml(item.type)}</span><strong>${escapeHtml(item.title)}</strong><small>${escapeHtml(item.summary)}</small><b>↗</b></a>`).join("") : emptyState("没有找到相关内容", "试试项目名称、资源分类或 Wiki 标题。")}</div>`;
-  }
-
-  function render() {
-    const state = locationState();
-    const route = state.route;
-    searchResults.hidden = true;
-    document.querySelectorAll("[data-route]").forEach(link => link.classList.toggle("active", link.dataset.route === route));
-    currentSection.textContent = navLabels[route] || "搜索结果";
-    if (route === "profile") page.innerHTML = renderProfile();
-    else if (route === "resources") page.innerHTML = renderResources();
-    else if (route === "projects") page.innerHTML = renderProjects();
-    else if (route === "wiki") page.innerHTML = renderWiki(state.projectId, state.pageId);
-    else if (route === "gallery") page.innerHTML = renderGallery();
-    else if (route === "search") page.innerHTML = renderSearchPage(state.query || "");
-    else page.innerHTML = renderHome();
-    bindPageEvents();
-    closeMenu();
-    window.scrollTo(0, 0);
-  }
-
-  function bindPageEvents() {
-    document.querySelectorAll(".filter-button").forEach(button => button.addEventListener("click", () => {
-      document.querySelectorAll(".filter-button").forEach(item => item.classList.toggle("active", item === button));
-      const filter = button.dataset.filter;
-      const items = filter === "全部" ? data.resources : data.resources.filter(item => item.category === filter);
-      document.getElementById("resource-list").innerHTML = items.map(resourceCard).join("");
-    }));
-  }
-
-  function collectSearchItems() {
-    return [
-      ...data.resources.map(item => ({ type: "资源", title: item.name, summary: item.description, text: `${item.name} ${item.description} ${item.category}`, href: hrefFor("resources") })),
-      ...data.projects.flatMap(project => [
-        { type: "项目", title: project.name, summary: project.summary, text: `${project.name} ${project.summary} ${project.tags.join(" ")}`, href: hrefFor(`wiki/${project.id}/overview`) },
-        ...project.pages.map(item => ({ type: "Wiki", title: `${project.name} · ${item.title}`, summary: item.body.join(" "), text: `${project.name} ${item.title} ${item.body.join(" ")}`, href: hrefFor(`wiki/${project.id}/${item.id}`) }))
-      ]),
-      { type: "介绍", title: data.profile.name, summary: data.profile.introduction.join(" "), text: `${data.profile.name} ${data.profile.introduction.join(" ")} ${data.profile.links.map(link => `${link.name} ${link.label}`).join(" ")} ${data.profile.groups.map(group => `${group.name} ${group.number}`).join(" ")}`, href: hrefFor("profile") },
-      ...(data.gallery.artworks || []).map(artwork => ({ type: "图库", title: artwork.title || "收藏稿件", summary: artwork.artist || "个人约稿", text: `${artwork.title || ""} ${artwork.artist || ""} ${artwork.note || ""}`, href: hrefFor("gallery") }))
-    ];
-  }
-
+  function closeSearch() { searchResults.hidden = true; searchInput.setAttribute('aria-expanded', 'false'); }
   function updateSearch() {
-    const query = searchInput.value.trim().toLowerCase();
-    if (!query) { searchResults.hidden = true; searchResults.innerHTML = ""; return; }
-    const matches = collectSearchItems().filter(item => item.text.toLowerCase().includes(query)).slice(0, 7);
-    searchResults.innerHTML = `<div class="search-result-caption">搜索档案内容 <span>${matches.length}${matches.length === 7 ? "+" : ""}</span></div>${matches.length ? matches.map(item => `<a href="${item.href}" class="search-result-row"><span>${escapeHtml(item.type)}</span><strong>${escapeHtml(item.title)}</strong><small>${escapeHtml(item.summary)}</small></a>`).join("") : `<p class="search-no-results">没有找到相关内容</p>`}<a class="search-all" href="${hrefFor(`search/${encodeURIComponent(searchInput.value.trim())}`)}">查看全部结果 <span>↗</span></a>`;
+    const query = searchInput.value.trim();
+    clearTimeout(searchTimer);
+    if (!query) { closeSearch(); searchResults.innerHTML = ''; return; }
+    const matches = core.search(searchIndex, query);
+    searchResults.innerHTML = `<div class="search-result-caption"><span>找到 ${matches.length} 条记录</span><span>↑ ↓ 选择 · Enter 打开</span></div>${matches.slice(0, 7).map(item => `<a class="search-result-row" href="${e(item.href)}"><span>${e(item.type)}</span><strong>${e(item.title)}</strong><small>${e(item.summary)}</small></a>`).join('')}${matches.length ? '' : '<p>没有找到相关内容，换个词试试。</p>'}<a class="search-all" href="#/search/${segment(query)}">查看全部结果 <span aria-hidden="true">↗</span></a>`;
     searchResults.hidden = false;
+    searchInput.setAttribute('aria-expanded', 'true');
+    searchTimer = setTimeout(() => { document.getElementById('search-status').textContent = `找到 ${matches.length} 条记录，按向下键浏览建议。`; }, 250);
   }
-
-  function closeMenu() {
-    sidebar.classList.remove("open");
-    menuToggle.setAttribute("aria-expanded", "false");
-    backdrop.hidden = true;
+  function setMenu(open, restoreFocus = false) {
+    menuOpen = open && mobile.matches;
+    nav.classList.toggle('open', menuOpen);
+    nav.inert = mobile.matches && !menuOpen;
+    menuToggle.setAttribute('aria-expanded', String(menuOpen));
+    menuToggle.setAttribute('aria-label', menuOpen ? '关闭导航菜单' : '打开导航菜单');
+    backdrop.hidden = !menuOpen;
+    document.body.classList.toggle('menu-open', menuOpen);
+    for (const element of [page, document.querySelector('.site-footer'), document.getElementById('search-area'), document.querySelector('.wordmark')]) element.inert = menuOpen;
+    if (menuOpen) { closeSearch(); nav.querySelector('a').focus(); }
+    else if (restoreFocus) menuToggle.focus();
   }
-
-  async function copyGroupNumber(number, button) {
-    const status = document.getElementById("copy-status");
+  function focusTarget(target, scroll = true) {
+    if (!target) return;
+    if (!target.matches('a[href],button,input,select,textarea,summary,[tabindex]')) target.setAttribute('tabindex', '-1');
+    target.focus({ preventScroll: true });
+    if (scroll) target.scrollIntoView({ block: 'start', behavior: 'auto' });
+  }
+  function render(event) {
+    state = core.parseRoute(location.hash);
+    let title = navLabels[state.route] || '找不到页面';
+    let description = originalDescription;
+    let html;
+    if (state.route === 'home') html = renderHome();
+    else if (state.route === 'profile') html = renderProfile();
+    else if (state.route === 'projects') {
+      if (!state.projectId) html = renderProjects();
+      else { const project = projects.find(item => item.id === state.projectId); html = project ? renderProject(project) : notFound('没有找到这个项目，请返回项目目录。'); title = project?.name || '找不到项目'; description = project?.description || project?.summary || originalDescription; }
+    } else if (state.route === 'wiki') {
+      if (!state.projectId) html = renderWikiIndex();
+      else {
+        const resolved = core.resolveWiki(data, state);
+        if (resolved.error) { html = notFound(resolved.error === 'article' ? '这个项目还没有对应的文档，请从 Wiki 目录重新选择。' : '没有找到这个项目的 Wiki。'); title = '找不到文档'; }
+        else if (resolved.empty) { title = `${resolved.project.name} · Wiki`; html = heading('项目笔记', title) + emptyState('这里的笔记还在整理中', '项目介绍仍然可以正常阅读。', projectHref(resolved.project), '查看项目介绍'); }
+        else {
+          html = renderWiki(resolved.project, resolved.current); title = `${resolved.current.title} · ${resolved.project.name}`; description = resolved.current.description || resolved.project.summary;
+          const canonical = resolved.canonical + (state.section ? `?section=${segment(state.section)}` : '');
+          if (location.hash !== canonical) history.replaceState(null, '', canonical);
+        }
+      }
+    } else if (state.route === 'resources') html = renderResources();
+    else if (state.route === 'gallery') html = renderGallery();
+    else if (state.route === 'search') { html = renderSearch(state.query); title = state.query ? `搜索：${state.query}` : title; }
+    else html = notFound(state.malformed ? '地址中的文字编码不完整。可以重新搜索，或返回首页。' : undefined);
+    closeSearch(); setMenu(false);
+    page.classList.toggle('is-wiki', state.route === 'wiki' && Boolean(state.projectId));
+    page.innerHTML = html;
+    document.title = `${title} · 哦里冻 Oritong`;
+    document.querySelector('meta[name=description]').content = description;
+    document.querySelectorAll('[data-route]').forEach(link => { if (link.dataset.route === state.route) link.setAttribute('aria-current', 'page'); else link.removeAttribute('aria-current'); });
+    document.getElementById('route-status').textContent = title;
+    const targetId = state.section || (['resources', 'gallery'].includes(state.route) ? state.itemId : '');
+    const target = targetId ? document.getElementById(targetId) : null;
+    if (target && page.contains(target)) { target.classList.add('target-highlight'); requestAnimationFrame(() => focusTarget(target)); }
+    else { window.scrollTo(0, 0); if (event) focusTarget(page.querySelector('h1'), false); }
+  }
+  async function copyText(text, button, success) {
     let copied = false;
-    try {
-      await navigator.clipboard.writeText(number);
-      copied = true;
-    } catch {
-      const field = document.createElement("textarea");
-      field.value = number;
-      field.setAttribute("readonly", "");
-      field.style.position = "fixed";
-      field.style.opacity = "0";
-      document.body.appendChild(field);
-      field.select();
-      try { copied = document.execCommand("copy"); } catch { copied = false; }
-      field.remove();
+    try { await navigator.clipboard.writeText(text); copied = true; }
+    catch {
+      const field = document.createElement('textarea'); field.value = text; field.readOnly = true; field.className = 'sr-only'; document.body.append(field); field.select();
+      try { copied = document.execCommand('copy'); } catch { copied = false; }
+      field.remove(); button.focus({ preventScroll: true });
     }
-    button.classList.toggle("copied", copied);
-    button.querySelector("b").textContent = copied ? "已复制" : "复制";
-    if (status) status.textContent = copied ? `已复制群号 ${number}` : `复制未成功，请手动选择群号 ${number}`;
+    const label = button.querySelector('b') || button; label.textContent = copied ? '已复制' : '复制';
+    const status = document.getElementById('copy-status'); if (status) status.textContent = copied ? success : `复制未成功，请手动选择：${text}`;
   }
 
-  menuToggle.addEventListener("click", () => {
-    const open = !sidebar.classList.contains("open");
-    sidebar.classList.toggle("open", open);
-    menuToggle.setAttribute("aria-expanded", String(open));
-    backdrop.hidden = !open;
+  menuToggle.addEventListener('click', () => setMenu(!menuOpen, menuOpen));
+  document.getElementById('menu-close').addEventListener('click', () => setMenu(false, true));
+  backdrop.addEventListener('click', () => setMenu(false, true));
+  mobile.addEventListener('change', () => { setMenu(false); const directory = document.getElementById('wiki-directory'); if (directory) directory.open = !mobile.matches; });
+  searchInput.addEventListener('input', updateSearch);
+  searchInput.addEventListener('focus', updateSearch);
+  searchInput.addEventListener('keydown', event => {
+    if (event.isComposing) return;
+    if (event.key === 'Enter' && searchInput.value.trim()) { event.preventDefault(); location.hash = `/search/${segment(searchInput.value.trim())}`; closeSearch(); }
+    if (event.key === 'ArrowDown' || event.key === 'ArrowUp') { if (searchResults.hidden) updateSearch(); const links = searchResults.querySelectorAll('a'); if (links.length) { event.preventDefault(); links[event.key === 'ArrowDown' ? 0 : links.length - 1].focus(); } }
+    if (event.key === 'Escape') { event.preventDefault(); closeSearch(); searchInput.blur(); }
   });
-  backdrop.addEventListener("click", closeMenu);
-  document.addEventListener("click", event => {
-    const button = event.target.closest("[data-copy-group]");
-    if (button) copyGroupNumber(button.dataset.copyGroup, button);
+  searchResults.addEventListener('keydown', event => {
+    const links = [...searchResults.querySelectorAll('a')]; const index = links.indexOf(document.activeElement);
+    if (event.key === 'ArrowDown' || event.key === 'ArrowUp') { event.preventDefault(); links[(index + (event.key === 'ArrowDown' ? 1 : -1) + links.length) % links.length]?.focus(); }
+    if (event.key === 'Escape') { searchInput.focus(); closeSearch(); }
   });
-  searchInput.addEventListener("input", updateSearch);
-  searchInput.addEventListener("focus", updateSearch);
-  searchInput.addEventListener("keydown", event => {
-    if (event.key === "Escape") { searchInput.value = ""; updateSearch(); searchInput.blur(); }
-    if (event.key === "Enter" && searchInput.value.trim()) location.hash = `/search/${encodeURIComponent(searchInput.value.trim())}`;
+  document.getElementById('search-area').addEventListener('focusout', () => { setTimeout(() => { if (!document.getElementById('search-area').contains(document.activeElement)) closeSearch(); }, 0); });
+  document.addEventListener('keydown', event => {
+    if (event.isComposing) return;
+    if (menuOpen) {
+      if (event.key === 'Escape') { event.preventDefault(); setMenu(false, true); }
+      if (event.key === 'Tab') { const controls = [menuToggle, ...nav.querySelectorAll('a,button')]; const index = controls.indexOf(document.activeElement); if (event.shiftKey && index <= 0) { event.preventDefault(); controls.at(-1).focus(); } else if (!event.shiftKey && index === controls.length - 1) { event.preventDefault(); controls[0].focus(); } }
+      return;
+    }
+    if (event.key === '/' && !event.ctrlKey && !event.metaKey && !event.altKey && !document.activeElement.matches('input,textarea,select,[contenteditable]')) { event.preventDefault(); searchInput.focus(); }
   });
-  document.addEventListener("click", event => {
-    if (!event.target.closest(".topbar-tools")) searchResults.hidden = true;
+  document.addEventListener('click', event => {
+    const target = event.target.closest ? event.target : event.target.parentElement;
+    if (target.closest('.skip-link')) { event.preventDefault(); focusTarget(page); return; }
+    if (!target.closest('#search-area')) closeSearch();
+    const filter = target.closest('[data-filter]');
+    if (filter) {
+      const category = filter.dataset.filter; const items = category === '全部' ? data.resources : data.resources.filter(item => item.category === category);
+      document.querySelectorAll('[data-filter]').forEach(button => button.setAttribute('aria-pressed', String(button === filter)));
+      document.getElementById('resource-list').innerHTML = items.map(resourceCard).join('');
+      document.getElementById('filter-status').textContent = `${category}，${items.length} 个资源`;
+      history.replaceState(null, '', category === '全部' ? '#/resources' : `#/resources?category=${segment(category)}`);
+    }
+    const group = target.closest('[data-copy-group]'); if (group) copyText(group.dataset.copyGroup, group, `已复制群号 ${group.dataset.copyGroup}`);
+    const codeButton = target.closest('[data-copy-code]'); if (codeButton) copyText(document.getElementById(codeButton.dataset.copyCode).textContent, codeButton, '代码已复制');
+    const link = target.closest('a[href]');
+    if (link?.getAttribute('href') === location.hash) {
+      if (menuOpen) { setMenu(false); focusTarget(page.querySelector('h1'), false); }
+      if (link.dataset.section) { event.preventDefault(); focusTarget(document.getElementById(link.dataset.section)); }
+    }
   });
-  document.addEventListener("contextmenu", event => {
-    if (event.target.closest(".gallery-artwork")) event.preventDefault();
-  });
-  document.addEventListener("dragstart", event => {
-    if (event.target.closest(".gallery-artwork")) event.preventDefault();
-  });
-  document.addEventListener("keydown", event => {
-    if (event.key === "/" && !["INPUT", "TEXTAREA"].includes(document.activeElement.tagName)) { event.preventDefault(); searchInput.focus(); }
-  });
-  window.addEventListener("hashchange", render);
-  document.getElementById("footer-year").textContent = new Date().getFullYear();
-  render();
+  for (const name of ['contextmenu', 'dragstart']) document.addEventListener(name, event => { if (event.target.closest?.('.gallery-image-frame')) event.preventDefault(); });
+  window.addEventListener('hashchange', render);
+  document.getElementById('footer-year').textContent = new Date().getFullYear();
+  document.getElementById('footer-about').innerHTML = `<a href="#/home"><strong>${e(data.profile.name)} / Oritong</strong></a><p>${e(data.profile.role)}</p><p>一个持续整理中的个人空间。</p>`;
+  document.getElementById('footer-socials').innerHTML = featuredSocials.map(socialLink).join('') + '<a href="#/profile">所有主页与社群 ↗</a>';
+  setMenu(false); render();
 })();
