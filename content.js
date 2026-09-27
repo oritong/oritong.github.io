@@ -98,7 +98,8 @@ window.SITE_CONTENT = {
             "二、kubejs/client_scripts：这部分使用 KubeJS 脚本注册语言，不能只新增 JSON。实例中的中文脚本位于 kubejs/client_scripts/src/zh_cn/，主要文件是 zh_cn.js 和 tooltip_zh_cn.js。为新语言新建对应目录，例如 src/en_us/，分别复制这两个文件并重命名为 en_us.js 和 tooltip_en_us.js。",
             "复制脚本后，需要把文件中声明的变量名和函数名改成该语言专属的名称，并同步修改脚本内对这些名称的引用，避免与其他语言脚本重复。主翻译文件和提示文字文件都要检查；如果新增多种语言，每种语言都使用各自独有的名称。不要改动翻译键、物品 ID、占位符或脚本功能逻辑。",
             "打开两个新脚本，在文件底部找到 ClientEvents.lang('zh_cn', e => {，将 zh_cn 改为目标语言简称。例如英文使用 ClientEvents.lang('en_us', e => {，日文使用 ClientEvents.lang('ja_jp', e => {。两个脚本都要修改注册语言代码；文件名、目录名和注册代码应保持一致。",
-            "完成后，在启动器里将游戏语言切换到目标语言，检查 kubejs/assets 与 kubejs/client_scripts 添加的文本。若文本没有变化，核对语言代码、目录层级和 ClientEvents.lang 注册项；若启动时报脚本错误，恢复备份并检查变量名引用及语法。"
+            "完成后，在启动器里将游戏语言切换到目标语言，检查 kubejs/assets 与 kubejs/client_scripts 添加的文本。若文本没有变化，核对语言代码、目录层级和 ClientEvents.lang 注册项；若启动时报脚本错误，恢复备份并检查变量名引用及语法。",
+            "本整合包中不少内容的中文名称参考了不同的网络梗。如发现翻译问题，欢迎联系作者，也欢迎通过 PR 或 Issue 提交修正与建议。"
           ]
         },
         {
