@@ -1929,6 +1929,47 @@ kbd {
   }
 }
 
+@media (max-width:760px) {
+  .hero {
+    grid-template-columns:1fr;
+    gap:36px;
+  }
+
+  .now-layout,
+  .project-grid,
+  .featured-layout,
+  .shelf-grid,
+  .project-detail-layout,
+  .profile-layout,
+  .social-links,
+  .gallery-grid {
+    grid-template-columns:1fr;
+  }
+
+  .now-layout { gap:24px; }
+
+  .hero-aside {
+    grid-template-columns:108px minmax(0,1fr);
+    align-items:center;
+    min-height:0;
+  }
+
+  .hero-avatar {
+    width:108px;
+    grid-row:span 2;
+  }
+
+  .hero-aside small { grid-column:2; }
+}
+
+@media print {
+  body::before,
+  body::after,
+  .page-content::before {
+    display:none;
+  }
+}
+
 @media (prefers-reduced-motion:reduce) {
   *,*::before,*::after {
     animation:none !important;
@@ -1967,4 +2008,456 @@ kbd {
     max-width:none;
     padding:0;
   }
+}
+
+/* -------------------------------------------------------------------------
+   2026 interface pass · alien signal / next-generation personal console
+   The content remains intentionally quiet; this layer gives the existing
+   components a stronger sci-fi instrument-panel language.
+   ------------------------------------------------------------------------- */
+:root {
+  --color-primary:#6cf7ff;
+  --color-secondary:#a98cff;
+  --color-background:#050714;
+  --color-surface:#0b1022;
+  --color-card:#101832;
+  --color-text:#edf7ff;
+  --color-muted:#9caeca;
+  --color-border:#263454;
+  --color-accent:#d5b8ff;
+  --color-hover:#142344;
+  --color-active:#172c50;
+  --color-on-primary:#04131d;
+  --color-primary-hover:#b4fbff;
+  --color-border-hover:#5bacc1;
+  --color-grid:rgb(108 247 255 / .095);
+  --color-tint:rgb(108 247 255 / .065);
+  --shadow-popover:0 24px 80px rgb(0 0 0 / .45),0 0 34px rgb(108 247 255 / .08);
+  --radius-sm:6px;
+  --radius-md:10px;
+}
+
+html {
+  background:var(--color-background);
+  overflow-x:hidden;
+  background-image:
+    radial-gradient(circle at 12% 9%,rgb(54 74 180 / .2),transparent 29rem),
+    radial-gradient(circle at 88% 14%,rgb(150 55 202 / .14),transparent 28rem),
+    linear-gradient(145deg,#050714 0%,#070b1c 48%,#090b18 100%);
+}
+
+body {
+  position:relative;
+  isolation:isolate;
+  background:transparent;
+  overflow-x:hidden;
+}
+
+body::before,
+body::after {
+  content:'';
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+}
+
+body::before {
+  z-index:-3;
+  opacity:.3;
+  background-image:linear-gradient(rgb(108 247 255 / .035) 1px,transparent 1px),linear-gradient(90deg,rgb(108 247 255 / .035) 1px,transparent 1px);
+  background-size:72px 72px;
+  mask-image:linear-gradient(to bottom,black,transparent 70%);
+}
+
+body::after {
+  z-index:-2;
+  background:radial-gradient(ellipse at 50% -20%,transparent 24%,rgb(0 0 0 / .35) 72%);
+}
+
+#starfield { opacity:.6; }
+
+.site-header {
+  background:rgb(5 7 20 / .72);
+  backdrop-filter:blur(18px) saturate(135%);
+  border-bottom:1px solid rgb(108 247 255 / .2);
+  box-shadow:0 10px 34px rgb(0 0 0 / .2);
+}
+
+.site-header::after {
+  content:'';
+  position:absolute;
+  right:0;
+  bottom:-1px;
+  left:0;
+  height:1px;
+  background:linear-gradient(90deg,transparent 4%,var(--color-primary) 21%,var(--color-secondary) 56%,transparent 94%);
+  opacity:.7;
+}
+
+.header-inner { max-width:1320px; min-height:84px; }
+
+.wordmark { letter-spacing:.025em; }
+
+.wordmark-symbol {
+  width:42px;
+  height:42px;
+  border:1px solid var(--color-primary);
+  border-radius:8px;
+  background:linear-gradient(145deg,rgb(108 247 255 / .18),rgb(169 140 255 / .1));
+  box-shadow:inset 0 0 18px rgb(108 247 255 / .09),0 0 18px rgb(108 247 255 / .1);
+  clip-path:polygon(14% 0,86% 0,100% 18%,100% 82%,86% 100%,14% 100%,0 82%,0 18%);
+}
+
+.wordmark small { color:#91a9d0; letter-spacing:.16em; }
+
+.primary-nav>a {
+  min-height:42px;
+  padding-inline:14px;
+  color:#aebbd5;
+  letter-spacing:.025em;
+}
+
+.primary-nav>a[aria-current='page'] {
+  color:var(--color-primary);
+  background:linear-gradient(180deg,rgb(108 247 255 / .13),transparent);
+  box-shadow:inset 0 -1px var(--color-primary),0 0 18px rgb(108 247 255 / .08);
+}
+
+.primary-nav>a[aria-current='page']::after {
+  right:14px;
+  left:14px;
+  height:1px;
+  box-shadow:0 0 10px var(--color-primary);
+}
+
+.search-wrap {
+  background:rgb(11 16 34 / .9);
+  border-color:#2d4265;
+  border-radius:7px;
+  box-shadow:inset 0 0 18px rgb(108 247 255 / .035);
+}
+
+.search-wrap:focus-within {
+  border-color:var(--color-primary);
+  box-shadow:0 0 0 2px rgb(108 247 255 / .14),0 0 24px rgb(108 247 255 / .12);
+}
+
+.page-content {
+  max-width:1240px;
+  padding-top:72px;
+}
+
+.page-content::before {
+  content:'SIGNAL // ORITONG-NET // ONLINE';
+  display:block;
+  margin-bottom:22px;
+  color:rgb(108 247 255 / .54);
+  font:500 10px/1 var(--font-code);
+  letter-spacing:.2em;
+}
+
+.page-content.is-wiki::before { margin-bottom:18px; }
+
+.hero {
+  min-height:550px;
+  padding:42px 0 82px;
+  gap:clamp(44px,8vw,124px);
+}
+
+.hero::before {
+  inset:-30px -70px 18px;
+  background-image:linear-gradient(rgb(108 247 255 / .065) 1px,transparent 1px),linear-gradient(90deg,rgb(108 247 255 / .065) 1px,transparent 1px);
+  background-size:52px 52px;
+  mask-image:linear-gradient(90deg,transparent 0%,#000 25%,#000 76%,transparent 100%);
+  transform:perspective(900px) rotateX(20deg) translateY(-36px) scale(1.08);
+  transform-origin:center top;
+}
+
+.hero::after {
+  content:'';
+  position:absolute;
+  z-index:-1;
+  top:15%;
+  right:10%;
+  width:360px;
+  height:360px;
+  border:1px solid rgb(169 140 255 / .15);
+  border-radius:50%;
+  box-shadow:0 0 80px rgb(169 140 255 / .08),inset 0 0 70px rgb(108 247 255 / .045);
+  transform:rotate(-18deg) scaleY(.3);
+}
+
+.hero .eyebrow {
+  display:inline-flex;
+  align-items:center;
+  gap:10px;
+  padding:9px 14px 9px 12px;
+  border:1px solid rgb(108 247 255 / .32);
+  border-left:2px solid var(--color-primary);
+  background:rgb(8 17 37 / .64);
+  box-shadow:0 0 22px rgb(108 247 255 / .06);
+  letter-spacing:.14em;
+}
+
+.hero .eyebrow::before { content:'◈'; color:var(--color-primary); }
+
+.hero h1 {
+  max-width:780px;
+  font-size:clamp(3.8rem,7.1vw,6.7rem);
+  line-height:1.06;
+  letter-spacing:-.07em;
+  text-shadow:0 0 34px rgb(108 247 255 / .11);
+}
+
+.hero h1>span {
+  color:var(--color-primary);
+  text-shadow:0 0 26px rgb(108 247 255 / .35);
+}
+
+.hero-role {
+  color:#d9e8ff;
+  font-weight:500;
+  letter-spacing:.035em;
+}
+
+.hero-intro { color:#aab8d3; }
+
+.button {
+  min-height:46px;
+  border-color:#365177;
+  border-radius:6px;
+  background:rgb(12 23 48 / .62);
+  box-shadow:inset 0 0 12px rgb(108 247 255 / .035);
+}
+
+.button:hover {
+  color:var(--color-text);
+  border-color:var(--color-primary);
+  box-shadow:0 0 20px rgb(108 247 255 / .12),inset 0 0 14px rgb(108 247 255 / .08);
+  transform:translateY(-1px);
+}
+
+.button-primary {
+  background:linear-gradient(115deg,var(--color-primary),#9ae8ff 52%,#a98cff);
+  border-color:transparent;
+  box-shadow:0 0 24px rgb(108 247 255 / .18);
+}
+
+.button-primary:hover {
+  background:linear-gradient(115deg,#b8fbff,var(--color-primary) 52%,#c5b7ff);
+  box-shadow:0 0 30px rgb(108 247 255 / .35);
+}
+
+.hero-aside {
+  min-height:360px;
+  padding:28px;
+  gap:22px;
+  border-color:#385175;
+  border-radius:8px;
+  background:linear-gradient(145deg,rgb(18 30 61 / .9),rgb(8 13 30 / .82));
+  box-shadow:inset 0 0 36px rgb(108 247 255 / .045),0 18px 50px rgb(0 0 0 / .26),0 0 30px rgb(108 247 255 / .05);
+}
+
+.hero-aside::before {
+  content:'BIO.MODULE / 01';
+  position:absolute;
+  top:10px;
+  left:18px;
+  color:rgb(169 140 255 / .76);
+  font:500 10px/1 var(--font-code);
+  letter-spacing:.16em;
+}
+
+.hero-aside::after {
+  top:10px;
+  right:10px;
+  width:24px;
+  height:24px;
+  border-color:var(--color-primary);
+  box-shadow:5px -5px 0 -4px var(--color-secondary);
+}
+
+.hero-avatar {
+  width:min(100%,210px);
+  border-color:#426689;
+  border-radius:5px;
+  box-shadow:0 0 0 5px rgb(108 247 255 / .045),0 0 32px rgb(108 247 255 / .12);
+  filter:saturate(1.06) contrast(1.04);
+}
+
+.hero-aside p { color:#adbbd4; }
+.hero-aside small { color:var(--color-primary); letter-spacing:.14em; }
+
+.home-section {
+  border-top-color:#253b5f;
+  padding-top:52px;
+  margin-top:52px;
+}
+
+.home-section::before {
+  width:76px;
+  height:2px;
+  background:linear-gradient(90deg,var(--color-primary),var(--color-secondary),transparent);
+  box-shadow:0 0 12px rgb(108 247 255 / .5);
+}
+
+.section-heading h2,
+.page-heading h1 {
+  text-shadow:0 0 22px rgb(108 247 255 / .08);
+}
+
+.eyebrow {
+  color:var(--color-primary);
+  letter-spacing:.14em;
+}
+
+.section-heading .eyebrow::before,
+.page-heading .eyebrow::before { content:'// '; color:var(--color-secondary); }
+
+.now-list li+li { border-top-color:#263958; }
+
+.now-list a { min-height:86px; }
+.now-list a:hover,.now-list a:focus-visible { background:linear-gradient(90deg,rgb(108 247 255 / .08),transparent); }
+
+.status {
+  border-color:rgb(108 247 255 / .35);
+  border-radius:999px;
+  background:rgb(108 247 255 / .07);
+  box-shadow:inset 0 0 12px rgb(108 247 255 / .06);
+  letter-spacing:.04em;
+}
+
+.status::before {
+  content:'';
+  width:5px;
+  height:5px;
+  border-radius:50%;
+  background:currentColor;
+  box-shadow:0 0 8px currentColor;
+}
+
+.project-grid { gap:20px; }
+
+.project-card,
+.wiki-index-card,
+.project-facts,
+.resource-row,
+.gallery-artwork,
+.wiki-door,
+.empty-state {
+  border-color:#2a4166;
+  border-radius:8px;
+  background:linear-gradient(145deg,rgb(17 29 59 / .92),rgb(8 14 32 / .88));
+  box-shadow:inset 0 0 26px rgb(108 247 255 / .035),0 12px 30px rgb(0 0 0 / .14);
+}
+
+.project-card,
+.wiki-index-card,
+.gallery-artwork,
+.resource-row { position:relative; overflow:hidden; }
+
+.project-card::before,
+.wiki-index-card::before,
+.gallery-artwork::before,
+.resource-row::before {
+  content:'';
+  position:absolute;
+  top:0;
+  right:18px;
+  left:18px;
+  height:1px;
+  background:linear-gradient(90deg,transparent,var(--color-primary),transparent);
+  opacity:.6;
+}
+
+.project-card:hover,.project-card:focus-within,
+.wiki-index-card:hover,.gallery-artwork:hover,
+.resource-row:hover,.resource-row:focus-within {
+  border-color:#5b91ad;
+  box-shadow:inset 3px 0 var(--color-primary),inset 0 0 30px rgb(108 247 255 / .07),0 16px 36px rgb(0 0 0 / .22);
+  transform:translateY(-2px);
+}
+
+.project-card-meta { color:#9dadd0; }
+
+.tag-list li {
+  color:#aebddd;
+  border-color:#334969;
+  border-radius:999px;
+  background:rgb(108 247 255 / .035);
+  padding-inline:10px;
+}
+
+.wiki-door {
+  border-left:1px solid var(--color-primary);
+  border-right:1px solid rgb(169 140 255 / .5);
+  position:relative;
+}
+
+.wiki-door::after {
+  content:'DOCS // INDEX';
+  position:absolute;
+  top:16px;
+  right:22px;
+  color:rgb(169 140 255 / .72);
+  font:500 10px/1 var(--font-code);
+  letter-spacing:.14em;
+}
+
+.shelf-link { border-bottom-color:#2b3f60; }
+.shelf-link>span { color:var(--color-primary); }
+
+.breadcrumbs { color:#8498bc; }
+.breadcrumbs [aria-current] { color:var(--color-text); }
+
+.page-heading { margin-bottom:52px; }
+
+.project-description,.article-body,.profile-story { color:#c2cde0; }
+
+.wiki-layout { gap:28px; }
+.wiki-sidebar { border-color:#263b5d; }
+.wiki-sidebar h2 { color:var(--color-primary); }
+
+.wiki-article {
+  border-color:#2a4166;
+  border-radius:8px;
+  background:linear-gradient(145deg,rgb(16 27 54 / .92),rgb(7 13 30 / .88));
+  box-shadow:inset 0 0 34px rgb(108 247 255 / .03),0 14px 38px rgb(0 0 0 / .16);
+}
+
+.wiki-callout { border-left-color:var(--color-primary); background:rgb(108 247 255 / .07); }
+.code-block { border-color:#314a6c; background:#060a17; }
+.table-scroll table { border-color:#314a6c; }
+
+.gallery-image-frame { background:#080d1d; border-color:#314a6c; }
+.gallery-image-mark { color:var(--color-primary); }
+
+.site-footer { margin-top:42px; }
+.footer-main { border-top-color:#294060; }
+.footer-bottom { border-top-color:#263956; }
+
+.appearance-panel { background:rgb(10 16 35 / .96); border-color:#385174; }
+
+@media (max-width:639px) {
+  .page-content { padding-top:40px; }
+  .page-content::before { margin-bottom:16px; font-size:9px; letter-spacing:.14em; }
+  .hero { min-height:0; padding-top:24px; }
+  .hero::after { right:-90px; top:28%; width:280px; height:280px; }
+  .hero h1 { font-size:clamp(3.2rem,15vw,4.8rem); }
+  .hero-aside { min-height:0; padding:24px 16px 16px; }
+  .hero-aside::before { top:9px; left:14px; }
+  .home-section { padding-top:36px; margin-top:36px; }
+  .wiki-door::after { position:static; display:block; margin-top:4px; }
+}
+
+@media (max-width:760px) {
+  .hero { min-height:0; }
+  .hero-aside {
+    grid-template-columns:108px minmax(0,1fr);
+    align-items:center;
+    min-height:0;
+    padding:24px 16px 16px;
+  }
+  .hero-avatar { width:108px; grid-row:span 2; }
+  .hero-aside small { grid-column:2; }
 }
