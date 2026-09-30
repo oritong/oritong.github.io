@@ -867,6 +867,12 @@ kbd {
   padding:0;
 }
 
+.project-document-category {
+  margin:var(--space-6) 0 0;
+  color:var(--color-primary);
+  font-size:var(--text-small);
+}
+
 .project-document-list li {
   border-bottom:1px solid var(--color-border);
 }
@@ -952,6 +958,12 @@ kbd {
   display:grid;
   gap:var(--space-2);
   padding-top:var(--space-2);
+}
+
+.wiki-directory-category {
+  margin:var(--space-3) 0 0;
+  color:var(--color-muted);
+  font-size:var(--text-caption);
 }
 
 .wiki-link {

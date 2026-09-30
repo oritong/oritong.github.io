@@ -39,12 +39,74 @@
 
   function articleBlocks(article) {
     if (Array.isArray(article.blocks)) return article.blocks;
+    if (typeof article.markdown === 'string') return markdownBlocks(article.markdown);
     const headings = article.headings || [];
     return (article.body || []).flatMap((text, index) => [
       ...headings.filter(h => h.before === index).map(h => ({ type: 'heading', id: h.id, text: h.title })),
       { type: (article.callouts || []).includes(index) ? 'callout' : 'paragraph', text },
       ...(article.snippets || []).filter(snippet => snippet.after === index).map(snippet => ({ type: 'code', ...snippet }))
     ]);
+  }
+  function markdownBlocks(markdown) {
+    const lines = markdown.split(/\r?\n/);
+    const blocks = [];
+    let headingIndex = 0;
+    let index = 0;
+    const isTableRow = line => /^\s*\|.*\|\s*$/.test(line);
+    const isListItem = line => /^\s*(?:[-*+] |\d+[.)] )/.test(line);
+    const isBlockStart = line => /^#{1,3}\s+/.test(line) || /^```/.test(line) || isListItem(line) || isTableRow(line);
+    const tableCells = line => line.trim().replace(/^\||\|$/g, '').split('|').map(cell => cell.trim());
+
+    while (index < lines.length) {
+      const line = lines[index];
+      if (!line.trim()) { index += 1; continue; }
+
+      const heading = line.match(/^(#{1,3})\s+(.+)$/);
+      if (heading) {
+        headingIndex += 1;
+        blocks.push({ type: heading[1].length <= 2 ? 'heading' : 'subheading', id: `markdown-section-${headingIndex}`, text: heading[2] });
+        index += 1;
+        continue;
+      }
+
+      const fence = line.match(/^```\s*([\w+-]*)/);
+      if (fence) {
+        const code = [];
+        index += 1;
+        while (index < lines.length && !/^```\s*$/.test(lines[index])) code.push(lines[index++]);
+        if (index < lines.length) index += 1;
+        blocks.push({ type: 'code', language: fence[1], text: code.join('\n') });
+        continue;
+      }
+
+      if (isTableRow(line)) {
+        const rows = [];
+        while (index < lines.length && isTableRow(lines[index])) {
+          const cells = tableCells(lines[index++]);
+          if (!cells.every(cell => /^:?-{3,}:?$/.test(cell))) rows.push(cells);
+        }
+        if (rows.length) blocks.push({ type: 'table', headers: rows[0], rows: rows.slice(1) });
+        continue;
+      }
+
+      if (isListItem(line)) {
+        const first = line.match(/^\s*(\d+)[.)] /);
+        const ordered = Boolean(first);
+        const items = [];
+        while (index < lines.length && isListItem(lines[index])) {
+          const item = lines[index++].match(/^\s*(?:[-*+] |\d+[.)] )(.*)$/);
+          items.push(item[1]);
+        }
+        blocks.push({ type: 'list', ordered, items });
+        continue;
+      }
+
+      const paragraph = [line];
+      index += 1;
+      while (index < lines.length && lines[index].trim() && !isBlockStart(lines[index])) paragraph.push(lines[index++]);
+      blocks.push({ type: 'paragraph', text: paragraph.join(' ') });
+    }
+    return blocks;
   }
   function blockText(block) {
     return [block.text, block.caption, ...(block.items || []), ...(block.headers || []), ...(block.rows || []).flat()].filter(Boolean).join(' ');
