@@ -19,18 +19,26 @@
     maxStars: 64,
     starArea: 18000,
     driftSpeed: 0.35,
-    maxTrailStars: 28,
-    trailLifetime: 0.8,
-    trailSpacing: 11,
+    ribbonLifetime: 0.32,
+    ribbonMaxPoints: 48,
+    ribbonSpacing: 2,
+    maxSparks: 70,
+    sparkSpacing: 16,
     meteorInterval: [5, 11],
     mobileMeteorInterval: [10, 18],
     maxPixelRatio: 1.5
   };
   const motionPreference = window.matchMedia("(prefers-reduced-motion: reduce)");
   const palette = getComputedStyle(document.documentElement);
-  const colors = ["--color-primary", "--color-secondary", "--color-text"].map((token, index) => palette.getPropertyValue(token).trim() || ["#82e5f5", "#b9acfa", "#edf5ff"][index]);
+  const colors = ["--color-primary", "--color-secondary", "--color-text"].map((token, index) => palette.getPropertyValue(token).trim() || ["#3ef2ff", "#c69cff", "#eef6ff"][index]);
+  const hot = palette.getPropertyValue("--color-hot").trim() || "#ff4fd8";
+  const sparkColors = [colors[0], colors[0], colors[1], hot, colors[2]];
   const stars = [];
-  const trails = [];
+  // Pointer effects: a tapered light ribbon (oldest point first), loose sparks and click rings.
+  const ribbon = [];
+  const sparks = [];
+  const rings = [];
+  let sparkDistance = 0;
   const meteors = [];
   let meteorDelay = 0;
   let width = 0;
@@ -50,6 +58,7 @@
   let motionEnabled = readPreference("oritong-motion", true);
   let trailEnabled = readPreference("oritong-trail", true);
   let paused = true;
+  let trailDirty = false;
   let resizeFrame = null;
   const random = (min, max) => min + Math.random() * (max - min);
 
@@ -63,7 +72,7 @@
       ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
     }
     stars.length = 0;
-    trails.length = 0;
+    clearEffects();
     meteors.length = 0;
     meteorDelay = random(1.5, 3);
     lastPointer = null;
@@ -157,62 +166,200 @@
     }
   }
 
-  function spawnTrail(x, y) {
-    trails.push({
-      x, y, age: 0, life: random(0.65, 1) * SETTINGS.trailLifetime,
-      radius: random(3.5, 7), rotation: random(0, Math.PI),
-      spin: random(-1.8, 1.8), vx: random(-12, 12), vy: random(8, 22),
-      color: colors[Math.floor(Math.random() * colors.length)]
+  function spawnSpark(x, y, vx = 0, vy = 0, burst = false) {
+    const angle = random(0, Math.PI * 2);
+    const speed = burst ? random(60, 190) : random(8, 36);
+    sparks.push({
+      x, y, age: 0, life: burst ? random(0.45, 0.8) : random(0.4, 0.75),
+      vx: Math.cos(angle) * speed + vx * 0.12, vy: Math.sin(angle) * speed + vy * 0.12,
+      radius: burst ? random(1.4, 2.8) : random(1, 2.4), rotation: random(0, Math.PI),
+      spin: random(-4, 4), star: Math.random() < 0.35,
+      color: sparkColors[Math.floor(Math.random() * sparkColors.length)]
     });
-    if (trails.length > SETTINGS.maxTrailStars) trails.splice(0, trails.length - SETTINGS.maxTrailStars);
+    if (sparks.length > SETTINGS.maxSparks) sparks.splice(0, sparks.length - SETTINGS.maxSparks);
+  }
+
+  function addPoint(x, y) {
+    const previous = ribbon[ribbon.length - 1];
+    if (previous && Math.hypot(x - previous.x, y - previous.y) < SETTINGS.ribbonSpacing) return;
+    ribbon.push({ x, y, age: 0 });
+    if (ribbon.length > SETTINGS.ribbonMaxPoints) ribbon.splice(0, ribbon.length - SETTINGS.ribbonMaxPoints);
   }
 
   function pointerMove(event) {
     if (paused || !trailEnabled || document.hidden || event.pointerType === "touch") return;
-    const next = { x: event.clientX, y: event.clientY };
-    if (!lastPointer) {
+    // Coalesced events keep fast strokes smooth on high-rate mice.
+    const coalesced = event.getCoalescedEvents?.() || [];
+    for (const sample of coalesced.length ? coalesced : [event]) {
+      const next = { x: sample.clientX, y: sample.clientY };
+      if (!lastPointer) {
+        lastPointer = next;
+        addPoint(next.x, next.y);
+        spawnSpark(next.x, next.y);
+        continue;
+      }
+      const dx = next.x - lastPointer.x;
+      const dy = next.y - lastPointer.y;
+      const distance = Math.hypot(dx, dy);
+      if (distance < 0.5) continue;
+      addPoint(next.x, next.y);
+      sparkDistance += distance;
+      // Faster movement sheds more sparks, capped so a flick never floods the canvas.
+      const sparkCount = Math.min(4, Math.floor(sparkDistance / SETTINGS.sparkSpacing));
+      if (sparkCount) {
+        sparkDistance -= sparkCount * SETTINGS.sparkSpacing;
+        for (let index = 1; index <= sparkCount; index += 1) {
+          spawnSpark(lastPointer.x + dx * index / sparkCount, lastPointer.y + dy * index / sparkCount, dx * 60, dy * 60);
+        }
+      }
       lastPointer = next;
-      spawnTrail(next.x, next.y);
-      wakeTrail();
-      return;
     }
-    const dx = next.x - lastPointer.x;
-    const dy = next.y - lastPointer.y;
-    const distance = Math.hypot(dx, dy);
-    if (distance < SETTINGS.trailSpacing) return;
-    const count = Math.min(8, Math.floor(distance / SETTINGS.trailSpacing));
-    for (let index = 1; index <= count; index += 1) {
-      spawnTrail(lastPointer.x + dx * index / count, lastPointer.y + dy * index / count);
-    }
-    lastPointer = next;
     wakeTrail();
   }
 
-  // Only request frames while a star is fading or the optional sky is running.
+  function pointerDown(event) {
+    if (paused || !trailEnabled || document.hidden || event.pointerType === "touch") return;
+    rings.push({ x: event.clientX, y: event.clientY, age: 0, life: 0.55 });
+    for (let index = 0; index < 14; index += 1) spawnSpark(event.clientX, event.clientY, 0, 0, true);
+    wakeTrail();
+  }
+
+  // Only request frames while an effect is fading or the optional sky is running.
   function wakeTrail() {
     if (frameId !== null) return;
     lastFrame = null;
     frameId = requestAnimationFrame(frame);
   }
 
+  function hasEffects() {
+    return ribbon.length > 0 || sparks.length > 0 || rings.length > 0;
+  }
+
+  function paintRibbon(delta) {
+    for (const point of ribbon) point.age += delta;
+    while (ribbon.length && ribbon[0].age >= SETTINGS.ribbonLifetime) ribbon.shift();
+    if (ribbon.length < 2) return;
+    const last = ribbon.length - 1;
+    const head = ribbon[last];
+    const tail = ribbon[0];
+    // Strength tapers from the tail to the cursor and fades with each point's age.
+    const strength = ribbon.map((point, index) => Math.max(0, 1 - point.age / SETTINGS.ribbonLifetime) * (index / last));
+    const normals = ribbon.map((point, index) => {
+      const before = ribbon[Math.max(0, index - 1)];
+      const after = ribbon[Math.min(last, index + 1)];
+      const dx = after.x - before.x;
+      const dy = after.y - before.y;
+      const length = Math.hypot(dx, dy) || 1;
+      return { x: -dy / length, y: dx / length };
+    });
+    // One filled, tapered outline per layer: no overlapping joints, so no beading.
+    const layer = (halfWidth, style, alpha) => {
+      trailContext.beginPath();
+      for (let index = 0; index <= last; index += 1) {
+        const w = halfWidth(strength[index]);
+        const x = ribbon[index].x + normals[index].x * w;
+        const y = ribbon[index].y + normals[index].y * w;
+        if (index === 0) trailContext.moveTo(x, y);
+        else trailContext.lineTo(x, y);
+      }
+      for (let index = last; index >= 0; index -= 1) {
+        const w = halfWidth(strength[index]);
+        trailContext.lineTo(ribbon[index].x - normals[index].x * w, ribbon[index].y - normals[index].y * w);
+      }
+      trailContext.closePath();
+      trailContext.globalAlpha = alpha;
+      trailContext.fillStyle = style;
+      trailContext.fill();
+    };
+    const sweep = trailContext.createLinearGradient(tail.x, tail.y, head.x, head.y);
+    sweep.addColorStop(0, "transparent");
+    sweep.addColorStop(0.35, colors[1]);
+    sweep.addColorStop(1, colors[0]);
+    const core = trailContext.createLinearGradient(tail.x, tail.y, head.x, head.y);
+    core.addColorStop(0, "transparent");
+    core.addColorStop(0.6, colors[0]);
+    core.addColorStop(1, colors[2]);
+    // Outer haze, coloured body, then a white-hot filament.
+    layer(s => s * 9, sweep, 0.14);
+    layer(s => s * 3.2, sweep, 0.45);
+    layer(s => s * 1.1, core, 0.95);
+    const headLife = Math.max(0, 1 - head.age / SETTINGS.ribbonLifetime);
+    const glow = trailContext.createRadialGradient(head.x, head.y, 0, head.x, head.y, 16);
+    glow.addColorStop(0, colors[2]);
+    glow.addColorStop(0.25, colors[0]);
+    glow.addColorStop(1, "transparent");
+    trailContext.globalAlpha = headLife * 0.55;
+    trailContext.fillStyle = glow;
+    trailContext.beginPath();
+    trailContext.arc(head.x, head.y, 16, 0, Math.PI * 2);
+    trailContext.fill();
+  }
+
+  function paintSparks(delta) {
+    const drag = Math.exp(-3.2 * delta);
+    for (let index = sparks.length - 1; index >= 0; index -= 1) {
+      const spark = sparks[index];
+      spark.age += delta;
+      if (spark.age >= spark.life) { sparks.splice(index, 1); continue; }
+      const life = 1 - spark.age / spark.life;
+      spark.vx *= drag;
+      spark.vy = spark.vy * drag + 18 * delta;
+      spark.x += spark.vx * delta;
+      spark.y += spark.vy * delta;
+      spark.rotation += spark.spin * delta;
+      const radius = spark.radius * (0.4 + life * 0.6);
+      trailContext.fillStyle = spark.color;
+      trailContext.globalAlpha = life * life * 0.28;
+      trailContext.beginPath();
+      trailContext.arc(spark.x, spark.y, radius * 3.2, 0, Math.PI * 2);
+      trailContext.fill();
+      trailContext.globalAlpha = life * (0.75 + Math.sin(spark.age * 38) * 0.25);
+      if (spark.star) starShape(trailContext, spark.x, spark.y, radius * 2.2, spark.rotation, 4);
+      else {
+        trailContext.beginPath();
+        trailContext.arc(spark.x, spark.y, radius, 0, Math.PI * 2);
+        trailContext.fill();
+      }
+    }
+  }
+
+  function paintRings(delta) {
+    for (let index = rings.length - 1; index >= 0; index -= 1) {
+      const ring = rings[index];
+      ring.age += delta;
+      if (ring.age >= ring.life) { rings.splice(index, 1); continue; }
+      const progress = ring.age / ring.life;
+      const eased = 1 - (1 - progress) ** 3;
+      trailContext.lineWidth = 1.5;
+      // A rotating hexagon reads as an interface pulse rather than a water ripple.
+      trailContext.globalAlpha = (1 - progress) * 0.9;
+      trailContext.strokeStyle = colors[0];
+      trailContext.beginPath();
+      for (let side = 0; side <= 6; side += 1) {
+        const angle = side * Math.PI / 3 + progress * 0.6;
+        const px = ring.x + Math.cos(angle) * (6 + eased * 30);
+        const py = ring.y + Math.sin(angle) * (6 + eased * 30);
+        if (side === 0) trailContext.moveTo(px, py);
+        else trailContext.lineTo(px, py);
+      }
+      trailContext.stroke();
+      trailContext.globalAlpha = (1 - progress) * 0.5;
+      trailContext.strokeStyle = hot;
+      trailContext.beginPath();
+      trailContext.arc(ring.x, ring.y, 3 + eased * 18, 0, Math.PI * 2);
+      trailContext.stroke();
+    }
+  }
+
   function paintTrails(delta) {
     trailContext.clearRect(0, 0, width, height);
-    for (let index = trails.length - 1; index >= 0; index -= 1) {
-      const star = trails[index];
-      star.age += delta;
-      if (star.age >= star.life) { trails.splice(index, 1); continue; }
-      const life = 1 - star.age / star.life;
-      star.x += star.vx * delta;
-      star.y += star.vy * delta;
-      star.rotation += star.spin * delta;
-      trailContext.globalAlpha = life * 0.9;
-      trailContext.fillStyle = star.color;
-      trailContext.shadowColor = star.color;
-      trailContext.shadowBlur = 9 * life;
-      starShape(trailContext, star.x, star.y, star.radius * (0.35 + life * 0.65), star.rotation);
-    }
+    // Additive blending makes overlapping light brighten instead of muddying.
+    trailContext.globalCompositeOperation = "lighter";
+    paintRibbon(delta);
+    paintSparks(delta);
+    paintRings(delta);
+    trailContext.globalCompositeOperation = "source-over";
     trailContext.globalAlpha = 1;
-    trailContext.shadowBlur = 0;
   }
 
   function frame(timestamp) {
@@ -227,14 +374,27 @@
       paintBackground(backgroundAge);
       backgroundAge = 0;
     }
-    if (trails.length) paintTrails(delta);
-    if (motionEnabled || trails.length) frameId = requestAnimationFrame(frame);
+    if (hasEffects()) {
+      paintTrails(delta);
+      trailDirty = true;
+    } else if (trailDirty) {
+      trailContext.clearRect(0, 0, width, height);
+      trailDirty = false;
+    }
+    if (motionEnabled || hasEffects()) frameId = requestAnimationFrame(frame);
     else lastFrame = null;
   }
 
-  function clearTrails() {
+  function clearEffects() {
     lastPointer = null;
-    trails.length = 0;
+    sparkDistance = 0;
+    ribbon.length = 0;
+    sparks.length = 0;
+    rings.length = 0;
+  }
+
+  function clearTrails() {
+    clearEffects();
     trailContext.clearRect(0, 0, width, height);
   }
 
@@ -254,8 +414,8 @@
     if (toggle) toggle.disabled = !allowed;
     if (trailToggle) trailToggle.disabled = !allowed;
     if (label) label.textContent = allowed && motionEnabled ? "背景星空与流星：开启" : "背景星空与流星：关闭";
-    if (trailLabel) trailLabel.textContent = allowed && trailEnabled ? "星星拖尾：开启" : "星星拖尾：关闭";
-    if (hint) hint.textContent = allowed ? "背景星空、随机流星与鼠标拖尾默认开启；可分别切换背景和拖尾，选择会保存在此浏览器。" : "系统已启用减少动态效果，背景动画与星星拖尾保持关闭。";
+    if (trailLabel) trailLabel.textContent = allowed && trailEnabled ? "鼠标光迹：开启" : "鼠标光迹：关闭";
+    if (hint) hint.textContent = allowed ? "背景星空、随机流星与鼠标光迹默认开启；可分别切换，选择会保存在此浏览器。" : "系统已启用减少动态效果，背景动画与鼠标光迹保持关闭。";
     context.clearRect(0, 0, width, height);
     if (allowed && motionEnabled) paintBackground(0);
     if (!paused && motionEnabled && !document.hidden) frameId = requestAnimationFrame(frame);
@@ -267,6 +427,7 @@
   document.addEventListener("visibilitychange", syncMotion);
   window.addEventListener("resize", () => { if (resizeFrame !== null) cancelAnimationFrame(resizeFrame); resizeFrame = requestAnimationFrame(() => { resizeFrame = null; resize(); }); }, { passive: true });
   window.addEventListener("pointermove", pointerMove, { passive: true });
+  window.addEventListener("pointerdown", pointerDown, { passive: true });
   document.documentElement.addEventListener("pointerleave", () => { lastPointer = null; });
   window.addEventListener("blur", clearTrails);
   window.addEventListener("pagehide", () => {
