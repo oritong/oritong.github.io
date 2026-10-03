@@ -127,8 +127,8 @@ const widths = [320, 360, 390, 639, 640, 760, 761, 959, 960, 1100, 1440];
     await page.locator('.search-result-row').first().click();
     await page.waitForFunction(() => document.activeElement.id === 'artwork-1');
     check('search locates exact artwork', page.url().endsWith('/gallery/artwork-1'));
-    check('gallery references retained', await page.locator('.gallery-image-frame img').count() === 6);
-    check('artist links retained', await page.locator('.gallery-artist-link').count() === 6);
+    check('gallery references retained', await page.locator('.gallery-image-frame img').count() === 5);
+    check('artist links retained', await page.locator('.gallery-artist-link').count() === 5);
     await go('#/profile');
     // Mock only the clipboard to avoid replacing the user's system clipboard on reruns.
     await page.evaluate(() => { window.testClipboard = ''; Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: async text => { window.testClipboard = text; } } }); });

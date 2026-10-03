@@ -41,7 +41,7 @@
 - 资源 12 条，分为开发文档、设计与灵感、效率工具 3 类。
 - `projects` 2 个，`participations` 0 个。
 - Wiki 共 6 篇：个人档案站 4 篇，钻石大陆加豪版 2 篇。
-- 图库 6 条展示记录，另有个人头像 1 个资源。
+- 图库 5 条展示记录，另有个人头像 1 个资源。
 
 ### 3.2 路由表
 
@@ -52,7 +52,7 @@
 | `#/resources` | 全部资源、分类筛选 | 资源外链，新窗口打开 |
 | `#/projects` | 个人项目与参与项目合并列表 | 每个条目通过箭头进入 Wiki |
 | `#/wiki/:projectId/:pageId` | 项目目录与文章 | 返回项目列表；切换同项目章节 |
-| `#/gallery` | 使用声明、6 条作品署名和资源引用 | 画师外部主页 |
+| `#/gallery` | 使用声明、5 条作品署名和资源引用 | 画师外部主页 |
 | `#/search/:query` | 全站匹配结果 | 项目与文章直达；资源和图库只达栏目 |
 
 单个 `index.html` 使用 Hash 切换，不存在每篇文章对应的独立 HTML 文件。`#/wiki` 没有索引页实现，会默认进入 `projects[0]` 的 `overview`。
@@ -211,14 +211,13 @@ participations：空数组
 | 资源路径 | 字节数 | 源码用途 |
 | --- | ---: | --- |
 | `assets/avatar.jpg` | 192,801 | `content.js:5` → `app.js:68` 头像 |
-| `assets/gallery/character-sheet.png` | 2,808,911 | `content.js:109` → 图库模板 |
-| `assets/gallery/choco-illustration.png` | 622,058 | `content.js:110` → 图库模板 |
-| `assets/gallery/little-beast.png` | 2,942,807 | `content.js:111` → 图库模板 |
-| `assets/gallery/moon-festival.png` | 840,330 | `content.js:112` → 图库模板 |
-| `assets/gallery/cheese-ball.png` | 1,680,244 | `content.js:113` → 图库模板 |
-| `assets/gallery/mountain-peak.jpg` | 773,145 | `content.js:114` → 图库模板 |
+| `assets/gallery/choco-illustration.png` | 622,058 | `content.js:303` → 图库模板 |
+| `assets/gallery/little-beast.png` | 2,942,807 | `content.js:304` → 图库模板 |
+| `assets/gallery/moon-festival.png` | 840,330 | `content.js:305` → 图库模板 |
+| `assets/gallery/cheese-ball.png` | 1,680,244 | `content.js:306` → 图库模板 |
+| `assets/gallery/mountain-peak.jpg` | 773,145 | `content.js:302` → 图库模板 |
 
-7 个引用均存在，合计 9,860,296 字节（约 9.86 MB），其中图库约 9.67 MB。此为源文件体积总和，不是测得的首次网络传输量。没有发现其他未被代码引用的本地图片文件；README 提到的旧 `assets/cover.jpg` 不在仓库中，运行代码也未引用。
+6 个引用均存在，合计 7,051,385 字节（约 7.05 MB），其中图库约 6.86 MB。此为源文件体积总和，不是测得的首次网络传输量。没有发现其他未被代码引用的本地图片文件；README 提到的旧 `assets/cover.jpg` 不在仓库中，运行代码也未引用。
 
 - 图库有 `loading=lazy`、`alt`、画师署名、画师链接、使用声明；头像容器有固定宽高比。
 - 图库 `<img>` 没有宽高属性，容器也没有预留图片比例；加载后发生布局变化的风险可从代码确认，但未测量 CLS 数值。

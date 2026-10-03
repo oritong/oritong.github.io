@@ -54,7 +54,7 @@ test('projects without Wiki remain valid', () => {
 test('resource and gallery search targets identify exact records', () => {
   const index = core.searchIndex(data);
   assert.equal(core.search(index, 'Regex101')[0].href, '#/resources/resource-12');
-  assert.equal(core.search(index, '个人形象设定图')[0].href, '#/gallery/artwork-1');
+  assert.equal(core.search(index, '横插')[0].href, '#/gallery/artwork-1');
   assert.equal(core.search(index, '     ').length, 0);
 });
 test('all search Wiki targets resolve; project targets use details', () => {

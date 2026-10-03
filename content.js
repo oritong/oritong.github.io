@@ -299,12 +299,11 @@ window.SITE_CONTENT = {
     description: "这里收录了我的形象约稿，记录不同画师笔下的我。感谢每一位画师的创作。",
     rightsNotice: "所有稿件均禁止投喂 AI。未经许可，请勿转载、商用或挪作他用。",
     artworks: [
-      { image: "assets/gallery/character-sheet.png", title: "个人形象设定图", artist: "鰹ノえぼシ", artistUrl: "https://www.eboshi-official.com/", alt: "哦里冻的个人形象设定图" },
+      { image: "assets/gallery/mountain-peak.jpg", title: "横插", artist: "鰹ノえぼシ", artistUrl: "https://www.eboshi-official.com/", alt: "鰹ノえぼシ绘制的横版插画" },
       { image: "assets/gallery/choco-illustration.png", title: "一枚小兽", artist: "伊伊子哦", artistUrl: "https://huajia.163.com/main/profile/pB09n5lE?", alt: "伊伊子哦绘制的可爱小兽" },
       { image: "assets/gallery/little-beast.png", title: "中秋贺图", artist: "葉碧岚", artistUrl: "https://huajia.163.com/main/profile/grk2zqQE?", alt: "葉碧岚绘制的中秋主题贺图" },
       { image: "assets/gallery/moon-festival.png", title: "一个芝士球", artist: "芋间凉叙", artistUrl: "https://space.bilibili.com/1939969303", alt: "芋间凉叙绘制的芝士球主题插画" },
-      { image: "assets/gallery/cheese-ball.png", title: "一张可爱小兽", artist: "Decol", artistUrl: "https://huajia.163.com/main/profile/MrALqa6E?", alt: "Decol绘制的可爱小兽" },
-      { image: "assets/gallery/mountain-peak.jpg", title: "横插", artist: "鰹ノえぼシ", artistUrl: "https://www.eboshi-official.com/", alt: "鰹ノえぼシ绘制的横版插画" }
+      { image: "assets/gallery/cheese-ball.png", title: "一张可爱小兽", artist: "Decol", artistUrl: "https://huajia.163.com/main/profile/MrALqa6E?", alt: "Decol绘制的可爱小兽" }
     ]
   }
 };
