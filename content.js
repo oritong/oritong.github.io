@@ -303,7 +303,8 @@ window.SITE_CONTENT = {
       { image: "assets/gallery/choco-illustration.png", title: "一枚小兽", artist: "伊伊子哦", artistUrl: "https://huajia.163.com/main/profile/pB09n5lE?", alt: "伊伊子哦绘制的可爱小兽" },
       { image: "assets/gallery/little-beast.png", title: "中秋贺图", artist: "葉碧岚", artistUrl: "https://huajia.163.com/main/profile/grk2zqQE?", alt: "葉碧岚绘制的中秋主题贺图" },
       { image: "assets/gallery/moon-festival.png", title: "一个芝士球", artist: "芋间凉叙", artistUrl: "https://space.bilibili.com/1939969303", alt: "芋间凉叙绘制的芝士球主题插画" },
-      { image: "assets/gallery/cheese-ball.png", title: "一张可爱小兽", artist: "Decol", artistUrl: "https://huajia.163.com/main/profile/MrALqa6E?", alt: "Decol绘制的可爱小兽" }
+      { image: "assets/gallery/cheese-ball.png", title: "一张可爱小兽", artist: "Decol", artistUrl: "https://huajia.163.com/main/profile/MrALqa6E?", alt: "Decol绘制的可爱小兽" },
+      { image: "assets/gallery/maid-outfit.png", title: "！？女仆装？！", artist: "空条梨子", artistUrl: "https://huajia.163.com/main/profile/vBb2YmWB", alt: "空条梨子绘制的女仆装形象约稿" }
     ]
   }
 };
