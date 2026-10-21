@@ -304,7 +304,10 @@ window.SITE_CONTENT = {
       { image: "assets/gallery/moon-festival.png", title: "中秋贺图", artist: "葉碧岚", artistUrl: "https://huajia.163.com/main/profile/grk2zqQE?", alt: "葉碧岚绘制的中秋主题贺图" },
       { image: "assets/gallery/cheese-ball.png", title: "一个芝士球", artist: "芋间凉叙", artistUrl: "https://space.bilibili.com/1939969303", alt: "芋间凉叙绘制的芝士球主题插画" },
       { image: "assets/gallery/little-beast.png", title: "一张可爱小兽", artist: "Decol", artistUrl: "https://huajia.163.com/main/profile/MrALqa6E?", alt: "Decol绘制的可爱小兽" },
-      { image: "assets/gallery/maid-outfit.png", title: "！？女仆装？！", artist: "空条梨子", artistUrl: "https://huajia.163.com/main/profile/vBb2YmWB", alt: "空条梨子绘制的女仆装形象约稿" }
+      { image: "assets/gallery/maid-outfit.png", title: "！？女仆装？！", artist: "空条梨子", artistUrl: "https://huajia.163.com/main/profile/vBb2YmWB", alt: "空条梨子绘制的女仆装形象约稿" },
+      { image: "assets/gallery/standing-portrait.png", title: "立绘", artist: "躺躺面条", artistUrl: "https://huajia.163.com/main/profile/08nKpRJB", alt: "躺躺面条绘制的哦里冻立绘" },
+      { image: "assets/gallery/duo-illustration.jpg", title: "双人插画", artist: "再哭奶粉罐给你打翻", artistUrl: "https://huajia.163.com/main/profile/y8z3w0pB", coOwner: "Water2H20", coOwnerUrl: "https://water2h2o.com/", alt: "再哭奶粉罐给你打翻绘制的双人插画，设主为哦里冻与 Water2H20" },
+      { image: "assets/gallery/watching-you.png", title: "我在看着你", artist: "星星睡不着", artistUrl: "https://huajia.163.com/main/profile/GBDeL74E", alt: "星星睡不着绘制的我在看着你主题插画" }
     ]
   }
 };

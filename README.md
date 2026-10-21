@@ -41,7 +41,7 @@ node scripts/serve.cjs
 - `home.currentProjects`：正在维护或整理的项目 ID，手动维护。
 - `resources`：名称、分类、介绍、网址；原有分类筛选仍可使用，筛选状态保存在地址中。
 - `projects` / `participations`：个人项目与参与项目，统一进入列表、搜索与 Wiki 查询。
-- `gallery.artworks`：沿用图片路径、标题、alt、画师、画师主页和可选日期/说明。
+- `gallery.artworks`：沿用图片路径、标题、alt、画师、画师主页和可选日期/说明。可用 `coOwner`、`coOwnerUrl` 标注并链接另一位设主。
 
 项目可包含 `description`（展示简介）、`summary`、`kind`、`status`、`tags`、`role`、`outcome`、`year`、`links: [{ label, url }]`。
 
@@ -91,7 +91,7 @@ node scripts/serve.cjs
 
 ## 图库与素材
 
-只把经过授权、缩小尺寸并加可见署名水印的展示副本放入 `assets/gallery`，原稿存放在仓库之外。当前改造只调整网页布局，没有重新读取、压缩、重命名或转换任何图片文件。
+只把经过授权、缩小尺寸并加可见署名水印的展示副本放入 `assets/gallery`，原稿存放在仓库之外。新增的立绘、双人插画和“我在看着你”已生成浅灰色斜向重复水印副本；不修改源文件，PNG 保留透明背景。需要重做这三张时，可用装有 Pillow 的 Python 运行 `python scripts/watermark-new-artworks.py "原图所在目录"`。默认使用 Windows 微软雅黑粗体，可通过 `--font` 指定支持中文的字体。
 
 图库不提供原图链接或下载按钮。图片区域禁止拖拽与右键，画师链接仍支持正常操作。网页上的使用提示不是文件本身的水印；静态网站不能完全阻止截图或保存公开资源。不要将作品用于 AI 训练。
 

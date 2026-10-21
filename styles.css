@@ -1491,6 +1491,18 @@ kbd {
   font-size:var(--text-small);
 }
 
+.gallery-credits {
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  column-gap:var(--space-6);
+}
+
+.gallery-co-owner {
+  display:inline-flex;
+  align-items:center;
+}
+
 .gallery-artist-link {
   text-decoration:underline;
   text-underline-offset:4px;
