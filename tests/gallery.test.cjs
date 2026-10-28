@@ -11,6 +11,7 @@ const expected = [
   ['立绘', '躺躺面条', 'standing-portrait.png', 'https://huajia.163.com/main/profile/08nKpRJB'],
   ['双人插画', '再哭奶粉罐给你打翻', 'duo-illustration.jpg', 'https://huajia.163.com/main/profile/y8z3w0pB'],
   ['我在看着你', '星星睡不着', 'watching-you.png', 'https://huajia.163.com/main/profile/GBDeL74E'],
+  ['私奔了家人们', '羽鲲鲲', 'running-away-together.png', 'https://huajia.163.com/main/profile/VMrjDaBq'],
 ];
 
 test('new commissions have the requested titles, artists and local display copies', () => {
@@ -31,6 +32,14 @@ test('duo illustration credits and links the other character owner', () => {
   assert.equal(duo.coOwner, 'Water2H20');
   assert.equal(duo.coOwnerUrl, 'https://water2h2o.com/');
   assert.equal(core.safeUrl(duo.coOwnerUrl), duo.coOwnerUrl);
+});
+
+test('running away together credits the corrected character owner', () => {
+  const artwork = data.gallery.artworks.find(item => item.title === '私奔了家人们');
+  assert.equal(artwork.coOwner, '碳酸碳');
+  assert.equal(artwork.coOwnerUrl, 'https://space.bilibili.com/1553937851');
+  assert.equal(core.safeUrl(artwork.coOwnerUrl), artwork.coOwnerUrl);
+  assert.ok(artwork.alt.includes('碳酸碳'));
 });
 
 test('new artwork search results target their exact gallery cards', () => {
