@@ -12,6 +12,8 @@ const expected = [
   ['双人插画', '再哭奶粉罐给你打翻', 'duo-illustration.jpg', 'https://huajia.163.com/main/profile/y8z3w0pB'],
   ['我在看着你', '星星睡不着', 'watching-you.png', 'https://huajia.163.com/main/profile/GBDeL74E'],
   ['私奔了家人们', '羽鲲鲲', 'running-away-together.png', 'https://huajia.163.com/main/profile/VMrjDaBq'],
+  ['万圣节贺图', '我是晨安呀', 'halloween-greeting.png', 'https://huajia.163.com/main/profile/KEvZPKJE'],
+  ['巧克力？！', '我是晨安呀', 'chocolate-surprise.png', 'https://huajia.163.com/main/profile/KEvZPKJE'],
 ];
 
 test('new commissions have the requested titles, artists and local display copies', () => {

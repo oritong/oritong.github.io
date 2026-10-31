@@ -6,7 +6,7 @@ window.SITE_CONTENT = {
   profile: {
     name: "哦里冻",
     handle: "ORITONG",
-    avatar: "assets/avatar.jpg",
+    avatar: "assets/avatar.png",
     role: "Minecraft 整合包制作者 · Blophy 官方谱师",
     intro: "尝试将所有能做的做到最好，但最后总是做成一团糟……",
     introduction: [
@@ -308,7 +308,9 @@ window.SITE_CONTENT = {
       { image: "assets/gallery/standing-portrait.png", title: "立绘", artist: "躺躺面条", artistUrl: "https://huajia.163.com/main/profile/08nKpRJB", alt: "躺躺面条绘制的哦里冻立绘" },
       { image: "assets/gallery/duo-illustration.jpg", title: "双人插画", artist: "再哭奶粉罐给你打翻", artistUrl: "https://huajia.163.com/main/profile/y8z3w0pB", coOwner: "Water2H20", coOwnerUrl: "https://water2h2o.com/", alt: "再哭奶粉罐给你打翻绘制的双人插画，设主为哦里冻与 Water2H20" },
       { image: "assets/gallery/watching-you.png", title: "我在看着你", artist: "星星睡不着", artistUrl: "https://huajia.163.com/main/profile/GBDeL74E", alt: "星星睡不着绘制的我在看着你主题插画" },
-      { image: "assets/gallery/running-away-together.png", title: "私奔了家人们", artist: "羽鲲鲲", artistUrl: "https://huajia.163.com/main/profile/VMrjDaBq", coOwner: "碳酸碳", coOwnerUrl: "https://space.bilibili.com/1553937851", alt: "羽鲲鲲绘制的私奔了家人们双人插画，设主为哦里冻与碳酸碳" }
+      { image: "assets/gallery/running-away-together.png", title: "私奔了家人们", artist: "羽鲲鲲", artistUrl: "https://huajia.163.com/main/profile/VMrjDaBq", coOwner: "碳酸碳", coOwnerUrl: "https://space.bilibili.com/1553937851", alt: "羽鲲鲲绘制的私奔了家人们双人插画，设主为哦里冻与碳酸碳" },
+      { image: "assets/gallery/halloween-greeting.png", title: "万圣节贺图", artist: "我是晨安呀", artistUrl: "https://huajia.163.com/main/profile/KEvZPKJE", alt: "我是晨安呀绘制的万圣节主题约稿，缠着绷带的巧克力狐与蝙蝠、墓碑" },
+      { image: "assets/gallery/chocolate-surprise.png", title: "巧克力？！", artist: "我是晨安呀", artistUrl: "https://huajia.163.com/main/profile/KEvZPKJE", alt: "我是晨安呀绘制的巧克力主题约稿，粉色爱心巧克力上的蝴蝶结小兽" }
     ]
   }
 };
